@@ -1,5 +1,0 @@
-#!name=m-station2.axs.com.sg
-#!desc=Converted from QuantumultX
-
-[Script]
-m-station2.axs.com.sg = type=cron,cronexp=0 0 * * *,script-path=6.js,timeout=60,wake-system=1
