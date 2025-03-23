@@ -1,0 +1,156 @@
+name: Basic Script Converter
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Create directories
+        run: |
+          mkdir -p Surge
+          mkdir -p Loon
+      
+      - name: Create simple converter script
+        run: |
+          cat > convert.sh << 'EOF'
+          #!/bin/bash
+          
+          # Get filenames from command line
+          INPUT_FILE=$1
+          OUTPUT_SURGE=$2
+          OUTPUT_LOON=$3
+          
+          # Get the filename without extension
+          FILENAME=$(basename "$INPUT_FILE" .js)
+          
+          # Read the file content
+          CONTENT=$(cat "$INPUT_FILE")
+          
+          # Create Surge module
+          echo "#!name=${FILENAME}" > "$OUTPUT_SURGE"
+          echo "#!desc=Converted from QuantumultX" >> "$OUTPUT_SURGE"
+          echo "" >> "$OUTPUT_SURGE"
+          
+          # Create Loon plugin
+          echo "#!name = ${FILENAME}" > "$OUTPUT_LOON"
+          echo "#!desc = Converted from QuantumultX" >> "$OUTPUT_LOON"
+          echo "#!author = Converted" >> "$OUTPUT_LOON"
+          echo "#!icon = " >> "$OUTPUT_LOON"
+          echo "" >> "$OUTPUT_LOON"
+          
+          # Check for script type
+          if grep -q "script-response-body" "$INPUT_FILE"; then
+            # This is a response script
+            PATTERN=$(grep -E "([^ ]+)[ ]+url[ ]+script-response-body" "$INPUT_FILE" | head -1 | awk '{print $1}')
+            
+            # Copy script for Surge
+            cp "$INPUT_FILE" "${OUTPUT_SURGE%.sgmodule}.js"
+            
+            # Copy script for Loon
+            cp "$INPUT_FILE" "${OUTPUT_LOON%.plugin}.js"
+            
+            # Add Script section to Surge module
+            echo "[Script]" >> "$OUTPUT_SURGE"
+            echo "${FILENAME} = type=http-response,pattern=${PATTERN},requires-body=1,max-size=0,script-path=${FILENAME}.js" >> "$OUTPUT_SURGE"
+            
+            # Add Script section to Loon plugin
+            echo "[Script]" >> "$OUTPUT_LOON"
+            echo "http-response ${PATTERN} script-path=${FILENAME}.js,requires-body=true,tag=${FILENAME}" >> "$OUTPUT_LOON"
+          
+          elif grep -q "hostname[ ]*=" "$INPUT_FILE"; then
+            # This is a rewrite rule file
+            
+            # Extract MITM hostnames
+            HOSTNAMES=$(grep -E "hostname[ ]*=" "$INPUT_FILE" | head -1 | sed -E "s/hostname[ ]*=[ ]*(.*)/\1/")
+            
+            # Add MITM section to Surge module
+            echo "[MITM]" >> "$OUTPUT_SURGE"
+            echo "hostname = %APPEND% ${HOSTNAMES}" >> "$OUTPUT_SURGE"
+            echo "" >> "$OUTPUT_SURGE"
+            
+            # Add MITM section to Loon plugin
+            echo "[MITM]" >> "$OUTPUT_LOON"
+            echo "hostname = ${HOSTNAMES}" >> "$OUTPUT_LOON"
+            echo "" >> "$OUTPUT_LOON"
+            
+            # Check for reject rules and add them
+            if grep -q "url[ ]+reject" "$INPUT_FILE"; then
+              # Add URL Rewrite section to Surge
+              echo "[URL Rewrite]" >> "$OUTPUT_SURGE"
+              
+              # Add Rewrite section to Loon
+              echo "[Rewrite]" >> "$OUTPUT_LOON"
+              
+              # Extract reject rules
+              grep -E "([^ ]+)[ ]+url[ ]+reject" "$INPUT_FILE" | while read -r line; do
+                PATTERN=$(echo "$line" | awk '{print $1}')
+                
+                # Add to Surge
+                echo "${PATTERN} - reject" >> "$OUTPUT_SURGE"
+                
+                # Add to Loon
+                echo "${PATTERN} reject" >> "$OUTPUT_LOON"
+              done
+            fi
+          
+          else
+            # Default: treat as a normal script
+            
+            # Copy and convert script for Surge
+            sed 's/\$task\.fetch/\$httpClient.get/g; s/\$prefs\.valueForKey/\$persistentStore.read/g' "$INPUT_FILE" > "${OUTPUT_SURGE%.sgmodule}.js"
+            
+            # Copy and convert script for Loon
+            sed 's/\$task\.fetch/\$http.get/g; s/\$prefs\.valueForKey/\$persistentStore.read/g' "$INPUT_FILE" > "${OUTPUT_LOON%.plugin}.js"
+            
+            # Add Script section to Surge module
+            echo "[Script]" >> "$OUTPUT_SURGE"
+            echo "${FILENAME} = type=cron,cronexp=0 0 * * *,wake-system=1,timeout=60,script-path=${FILENAME}.js" >> "$OUTPUT_SURGE"
+            
+            # Add Script section to Loon plugin
+            echo "[Script]" >> "$OUTPUT_LOON"
+            echo "cron \"${FILENAME}\" script-path=${FILENAME}.js,tag=${FILENAME},cronexp=0 0 * * *" >> "$OUTPUT_LOON"
+          fi
+          
+          # Always include the original script as a comment for reference
+          echo "" >> "$OUTPUT_SURGE"
+          echo "/* Original Script Reference" >> "$OUTPUT_SURGE"
+          echo "Path: $INPUT_FILE" >> "$OUTPUT_SURGE"
+          echo "*/" >> "$OUTPUT_SURGE"
+          
+          echo "" >> "$OUTPUT_LOON"
+          echo "/* Original Script Reference" >> "$OUTPUT_LOON"
+          echo "Path: $INPUT_FILE" >> "$OUTPUT_LOON"
+          echo "*/" >> "$OUTPUT_LOON"
+          EOF
+          
+          chmod +x convert.sh
+      
+      - name: Convert scripts
+        run: |
+          for file in QuantumultX/*.js; do
+            filename=$(basename "$file" .js)
+            echo "Converting $filename..."
+            ./convert.sh "$file" "Surge/${filename}.sgmodule" "Loon/${filename}.plugin"
+          done
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add Surge/ Loon/
+          git diff-index --quiet HEAD || git commit -m "Auto convert scripts"
+          
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+          git push
