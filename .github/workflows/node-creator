@@ -32,7 +32,7 @@ jobs:
               console.log('Creating templates for ' + filename + '...');
               
               // Create Loon plugin
-              const loonContent = '#!name = ' + filename + '🔐APP解锁\n' +
+              const loonContent = '#!name = ' + filename + 'APP解锁\n' +
                 '#!desc = 媒体制作 - 插件\n' +
                 '#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ\n' +
                 '#!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/' + filename + '.png\n\n' +
@@ -42,10 +42,10 @@ jobs:
                 'hostname = example.com';
               
               // Create Surge module
-              const surgeContent = '#!name = ' + filename + '🔐APP\n' +
+              const surgeContent = '#!name = ' + filename + 'APP\n' +
                 '#!desc = 媒体制作 - 模块\n' +
                 '#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ\n' +
-                '#!category=🔐APP\n\n' +
+                '#!category=APP\n\n' +
                 '[Script]\n' +
                 filename + ' = type=http-response, pattern=^https?://example.com/, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/' + filename + '.js, requires-body=true, max-size=-1, timeout=60\n\n' +
                 '[MITM]\n' +
