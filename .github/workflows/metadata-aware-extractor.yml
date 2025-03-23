@@ -128,7 +128,7 @@ jobs:
                   }
           
           def create_loon_template(info):
-              template = f"""#!name = {info['script_name']}🔐APP解锁
+              template = f"""#!name = {info['script_name']}
           #!desc={info['desc']}
           #!category={info['category']}
           #!author={info['author']}
@@ -151,10 +151,11 @@ jobs:
               return template
           
           def create_surge_template(info):
-              template = f"""#!name = {info['script_name']}🔐APP
+              template = f"""#!name = {info['script_name']}
           #!desc={info['desc']}
           #!category={info['category']}
           #!author={info['author']}
+          #!icon={info['icon']}
           """
               
               # Add reject rules if any
