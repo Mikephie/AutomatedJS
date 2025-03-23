@@ -1,7 +1,0 @@
-#!name = m-station2.axs.com.sg
-#!desc = Converted from QuantumultX
-#!author = Converted
-#!icon = 
-
-[Script]
-cron "m-station2.axs.com.sg" script-path=5.js,tag=m-station2.axs.com.sg,cronexp=0 0 * * *
