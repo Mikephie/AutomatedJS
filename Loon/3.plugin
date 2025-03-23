@@ -1,0 +1,11 @@
+#!name = m-station2.axs.com.sg
+#!desc = Converted from QuantumultX
+#!author = Converted
+#!homepage = https://github.com/Mikephie/AutomatedJS
+#!icon = 
+
+[MITM]
+hostname = m-station2.axs.com.sg
+
+[Rewrite]
+

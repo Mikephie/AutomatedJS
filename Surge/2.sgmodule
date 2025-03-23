@@ -1,0 +1,6 @@
+#!name=m-station2.axs.com.sg
+#!desc=Converted from QuantumultX
+
+[MITM]
+hostname = m-station2.axs.com.sg
+
