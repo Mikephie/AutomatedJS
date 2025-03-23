@@ -1,0 +1,151 @@
+name: Simple Script Converter
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      
+      - name: Create converter script
+        run: |
+          mkdir -p tools
+          cat > tools/converter.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          // Main function
+          function main() {
+            try {
+              const args = process.argv.slice(2);
+              const inputFile = args[0];
+              const outputSurge = args[1];
+              const outputLoon = args[2];
+              
+              console.log(`Converting ${inputFile} to Surge (${outputSurge}) and Loon (${outputLoon})...`);
+              
+              // Read the input file
+              const content = fs.readFileSync(inputFile, 'utf8');
+              
+              // Extract name and desc if available
+              let name = path.basename(inputFile, '.js');
+              let desc = "Converted from QuantumultX";
+              
+              const nameMatch = content.match(/name\s*=\s*['"]*([^'"]+)['"]*[\s,\n\r]/i);
+              const descMatch = content.match(/desc\s*=\s*['"]*([^'"]+)['"]*[\s,\n\r]/i);
+              
+              if (nameMatch && nameMatch[1]) name = nameMatch[1].trim();
+              if (descMatch && descMatch[1]) desc = descMatch[1].trim();
+              
+              // Create Surge .sgmodule file
+              const surgeDir = path.dirname(outputSurge);
+              if (!fs.existsSync(surgeDir)) {
+                fs.mkdirSync(surgeDir, { recursive: true });
+              }
+              
+              let surgeContent = `#!name=${name}\n`;
+              surgeContent += `#!desc=${desc}\n\n`;
+              
+              // Add Script section for Surge
+              if (content.includes('$task.fetch') || content.includes('$done(') || content.includes('function')) {
+                // Create separate js file for script
+                const scriptFile = outputSurge.replace('.sgmodule', '.js');
+                let scriptContent = content
+                  .replace(/\$task\.fetch/g, '$httpClient.get')
+                  .replace(/\$prefs\.valueForKey/g, '$persistentStore.read')
+                  .replace(/\$prefs\.setValueForKey/g, '$persistentStore.write')
+                  .replace(/\$notify/g, '$notification.post');
+                
+                fs.writeFileSync(scriptFile, scriptContent);
+                
+                surgeContent += `[Script]\n`;
+                surgeContent += `${name.replace(/\s+/g, '_')} = type=cron,cronexp=0 0 * * *,script-path=${path.basename(scriptFile)},timeout=60,wake-system=1\n\n`;
+              }
+              
+              // Include original content as comment if not recognized properly
+              surgeContent += `/* Original QuantumultX Script:\n\n${content}\n*/`;
+              
+              fs.writeFileSync(outputSurge, surgeContent);
+              console.log(`Created Surge module: ${outputSurge}`);
+              
+              // Create Loon .plugin file
+              const loonDir = path.dirname(outputLoon);
+              if (!fs.existsSync(loonDir)) {
+                fs.mkdirSync(loonDir, { recursive: true });
+              }
+              
+              let loonContent = `#!name = ${name}\n`;
+              loonContent += `#!desc = ${desc}\n`;
+              loonContent += `#!author = Converted\n`;
+              loonContent += `#!icon = \n\n`;
+              
+              // Add Script section for Loon
+              if (content.includes('$task.fetch') || content.includes('$done(') || content.includes('function')) {
+                // Create separate js file for script
+                const scriptFile = outputLoon.replace('.plugin', '.js');
+                let scriptContent = content
+                  .replace(/\$task\.fetch/g, '$http.get')
+                  .replace(/\$prefs\.valueForKey/g, '$persistentStore.read')
+                  .replace(/\$prefs\.setValueForKey/g, '$persistentStore.write')
+                  .replace(/\$notify/g, '$notification.post');
+                
+                fs.writeFileSync(scriptFile, scriptContent);
+                
+                loonContent += `[Script]\n`;
+                loonContent += `cron "${name}" script-path=${path.basename(scriptFile)},tag=${name.replace(/\s+/g, '_')},cronexp=0 0 * * *\n\n`;
+              }
+              
+              // Include original content as comment if not recognized properly
+              loonContent += `/* Original QuantumultX Script:\n\n${content}\n*/`;
+              
+              fs.writeFileSync(outputLoon, loonContent);
+              console.log(`Created Loon plugin: ${outputLoon}`);
+              
+            } catch (error) {
+              console.error(`Error: ${error.message}`);
+              process.exit(1);
+            }
+          }
+
+          main();
+          EOF
+      
+      - name: Create output directories
+        run: |
+          mkdir -p Surge
+          mkdir -p Loon
+      
+      - name: Convert scripts
+        run: |
+          find QuantumultX -name "*.js" | while read file; do
+            filename=$(basename "$file" .js)
+            echo "Converting $filename..."
+            node tools/converter.js "$file" "Surge/${filename}.sgmodule" "Loon/${filename}.plugin"
+          done
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add Surge/ Loon/
+          git diff-index --quiet HEAD || git commit -m "Auto convert scripts"
+          
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+          git push
