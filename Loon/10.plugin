@@ -1,11 +1,20 @@
-#!name = 10
+#!name = 𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹
 #!desc = Converted from QuantumultX
-#!author = Converted
+#!author = Converted from QX
 #!icon = 
+
+[MITM]
+hostname = m-station2.axs.com.sg
+
+[Rewrite]
 
 [Script]
 http-response ^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ script-path=10.js,requires-body=true,tag=10
 
-/* Original Script Reference
-Path: QuantumultX/10.js
+/* Original QuantumultX Configuration
+[rewrite_local]
+^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace reject
+^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight reject
+^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ url script-response-body https://raw.githubusercontent.com/Mikephie/Script/main/qx/axs.js
+
 */
