@@ -1,0 +1,58 @@
+name: Convert Scripts
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'QuantumultX/*.js'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'QuantumultX/*.js'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      
+      - name: Install Script Hub CLI
+        run: |
+          npm install -g @scripthub/cli
+          
+      - name: Create output directories
+        run: |
+          mkdir -p Surge
+          mkdir -p Loon
+      
+      - name: Convert QuantumultX scripts to Surge
+        run: |
+          for file in QuantumultX/*.js; do
+            filename=$(basename "$file")
+            echo "Converting $filename to Surge format..."
+            scripthub convert -i "$file" -o "Surge/${filename}" -f surge
+          done
+      
+      - name: Convert QuantumultX scripts to Loon
+        run: |
+          for file in QuantumultX/*.js; do
+            filename=$(basename "$file")
+            echo "Converting $filename to Loon format..."
+            scripthub convert -i "$file" -o "Loon/${filename}" -f loon
+          done
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Surge/ Loon/
+          git commit -m "Auto convert scripts to Surge and Loon formats" || echo "No changes to commit"
+          git push
