@@ -64,23 +64,23 @@ async function convertScripts() {
         }
         else if (line.startsWith('hostname =')) {
           const [, hostname] = line.match(/hostname = (.*)/) || [];
-          if (hostname) mitmSection += `hostname = %APPEND% ${hostname}\n`;
+          if (hostname) mitmSection += `hostname = %APPEND% ${hostname}\n`; // Surge keeps %APPEND%
         }
       });
 
-      // Surge .sgmodule format with #! metadata
+      // Surge .sgmodule format with #! metadata and spacing
       const surgeHeader = `#!name=${metadata.name}\n` +
                           (metadata.desc ? `#!desc=${metadata.desc}\n` : '') +
                           (metadata.author ? `#!author=${metadata.author}\n` : '') +
                           (metadata.icon ? `#!icon=${metadata.icon}\n` : '') +
                           (metadata.category ? `#!category=${metadata.category}\n` : '');
-      const surgeModule = `${surgeHeader}\n${ruleSection}${scriptSection}${mitmSection}`.trim();
+      const surgeModule = `${surgeHeader}\n${ruleSection}\n${scriptSection}\n${mitmSection}`.trim();
       const surgeOutput = path.join(surgeDir, `${baseName}.sgmodule`);
       await fs.writeFile(surgeOutput, surgeModule);
       console.log(`Generated ${baseName}.sgmodule for Surge`);
       console.log(`Surge content (first 100 chars): ${surgeModule.substring(0, 100)}...`);
 
-      // Loon .plugin format with #! metadata
+      // Loon .plugin format with #! metadata and spacing
       const loonHeader = `#!name=${metadata.name}\n` +
                          (metadata.desc ? `#!desc=${metadata.desc}\n` : '') +
                          (metadata.author ? `#!author=${metadata.author}\n` : '') +
@@ -89,6 +89,8 @@ async function convertScripts() {
 
       // Reset scriptSection for Loon-specific format
       scriptSection = '[Script]\n';
+      // Reset mitmSection for Loon without %APPEND%
+      mitmSection = '[MITM]\n';
       lines.forEach(line => {
         if (line.includes('url script-response-body')) {
           const [, url, scriptUrl] = line.match(/(^.*?)\s+url\s+script-response-body\s+(.*)/) || [];
@@ -96,9 +98,13 @@ async function convertScripts() {
             scriptSection += `http-response ${url} script-path=${scriptUrl}, requires-body=true, timeout=60, tag=${baseName}\n`;
           }
         }
+        else if (line.startsWith('hostname =')) {
+          const [, hostname] = line.match(/hostname = (.*)/) || [];
+          if (hostname) mitmSection += `hostname = ${hostname}\n`; // No %APPEND% for Loon
+        }
       });
 
-      const loonPlugin = `${loonHeader}\n${ruleSection}${scriptSection}${mitmSection}`.trim();
+      const loonPlugin = `${loonHeader}\n${ruleSection}\n${scriptSection}\n${mitmSection}`.trim();
       const loonOutput = path.join(loonDir, `${baseName}.plugin`);
       await fs.writeFile(loonOutput, loonPlugin);
       console.log(`Generated ${baseName}.plugin for Loon`);
