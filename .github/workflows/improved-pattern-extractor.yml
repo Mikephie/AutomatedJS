@@ -1,4 +1,4 @@
-name: Improved Pattern Extractor
+name: Reordered Pattern Extractor
 
 on:
   workflow_dispatch:
@@ -22,9 +22,9 @@ jobs:
         with:
           python-version: '3.x'
       
-      - name: Create improved Python extractor script
+      - name: Create reordered Python extractor script
         run: |
-          cat > extract_improved.py << 'EOF'
+          cat > extract_reordered.py << 'EOF'
           import os
           import re
           import sys
@@ -103,20 +103,20 @@ jobs:
           #!desc = 媒体制作 - 插件
           #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
           #!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/{info['filename']}.png
-
-         # Add reject rules if any
+          """
+              
+              # Add reject rules if any
               if info['reject_rules']:
-                  template += "\n\n[Rewrite]"
+                  template += "\n[Rewrite]"
                   for rule in info['reject_rules']:
                       template += f"\n{rule} reject"
-
+                  template += "\n"
               
-          [Script]
-          http-response {info['url_pattern']} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['script_path']}, requires-body=true, timeout=60, tag={info['filename']}"""
+              # Add Script section
+              template += f"\n[Script]\nhttp-response {info['url_pattern']} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['script_path']}, requires-body=true, timeout=60, tag={info['filename']}"
               
               # Add MITM section
               template += f"\n\n[MITM]\nhostname = {info['hostname']}"
-              
               
               return template
           
@@ -125,26 +125,26 @@ jobs:
           #!desc = 媒体制作 - 模块
           #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
           #!category=🔐APP
-
-          # Add reject rules if any
+          """
+              
+              # Add reject rules if any
               if info['reject_rules']:
-                  template += "\n\n[URL Rewrite]"
+                  template += "\n[URL Rewrite]"
                   for rule in info['reject_rules']:
                       template += f"\n{rule} - reject"
-
+                  template += "\n"
               
-          [Script]
-          {info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['script_path']}, requires-body=true, max-size=-1, timeout=60"""
+              # Add Script section
+              template += f"\n[Script]\n{info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['script_path']}, requires-body=true, max-size=-1, timeout=60"
               
               # Add MITM section
               template += f"\n\n[MITM]\nhostname = %APPEND% {info['hostname']}"
-              
               
               return template
           
           def main():
               if len(sys.argv) < 2:
-                  print("Usage: python extract_improved.py <qx_script_file>")
+                  print("Usage: python extract_reordered.py <qx_script_file>")
                   sys.exit(1)
               
               file_path = sys.argv[1]
@@ -180,10 +180,10 @@ jobs:
       
       - name: Process scripts
         run: |
-          # Process each file with improved Python script
+          # Process each file with reordered Python script
           for file in QuantumultX/*.js; do
             echo "Processing $file..."
-            python extract_improved.py "$file"
+            python extract_reordered.py "$file"
           done
       
       - name: Commit and push changes
@@ -191,5 +191,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Surge/ Loon/
-          git commit -m "Add improved templates with complete patterns" || echo "No changes to commit"
+          git commit -m "Add reordered templates with proper section sequence" || echo "No changes to commit"
           git push || echo "Nothing to push"
