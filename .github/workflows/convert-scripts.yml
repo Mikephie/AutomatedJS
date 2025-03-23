@@ -24,9 +24,11 @@ jobs:
         with:
           node-version: '16'
       
-      - name: Install Script Hub CLI
+      - name: Set up Script Hub conversion tool
         run: |
-          npm install -g @scripthub/cli
+          git clone https://github.com/Script-Hub-Org/Script-Hub.git
+          cd Script-Hub
+          npm install
           
       - name: Create output directories
         run: |
@@ -38,7 +40,7 @@ jobs:
           for file in QuantumultX/*.js; do
             filename=$(basename "$file")
             echo "Converting $filename to Surge format..."
-            scripthub convert -i "$file" -o "Surge/${filename}" -f surge
+            node Script-Hub/scripts/convert.js --input "$file" --output "Surge/${filename}" --target surge
           done
       
       - name: Convert QuantumultX scripts to Loon
@@ -46,7 +48,7 @@ jobs:
           for file in QuantumultX/*.js; do
             filename=$(basename "$file")
             echo "Converting $filename to Loon format..."
-            scripthub convert -i "$file" -o "Loon/${filename}" -f loon
+            node Script-Hub/scripts/convert.js --input "$file" --output "Loon/${filename}" --target loon
           done
       
       - name: Commit and push changes
