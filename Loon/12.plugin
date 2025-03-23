@@ -1,0 +1,10 @@
+#!name = 12🔐APP解锁
+#!desc = 媒体制作 - 插件
+#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/12.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/12.js, requires-body=true, timeout=60, tag=12
+
+[MITM]
+hostname = example.com

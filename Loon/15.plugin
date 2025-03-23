@@ -1,0 +1,10 @@
+#!name = 15🔐APP解锁
+#!desc = 媒体制作 - 插件
+#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/15.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/15.js, requires-body=true, timeout=60, tag=15
+
+[MITM]
+hostname = example.com
