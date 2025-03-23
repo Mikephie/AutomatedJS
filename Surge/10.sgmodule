@@ -1,10 +1,10 @@
-#!name = 10🔐APP
+#!name = AXS Payment🔐APP
 #!desc = 媒体制作 - 模块
 #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 #!category=🔐APP
 
 [Script]
-10 = type=http-response, pattern=^https?://example.com/, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/10.js, requires-body=true, max-size=-1, timeout=60
+10 = type=http-response, pattern=^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/10.js, requires-body=true, max-size=-1, timeout=60
 
 [MITM]
-hostname = %APPEND% example.com
+hostname = %APPEND% m-station2.axs.com.sg

@@ -1,10 +1,10 @@
-#!name = 13🔐APP解锁
+#!name = AXS Payment🔐APP解锁
 #!desc = 媒体制作 - 插件
 #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 #!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/13.png
 
 [Script]
-http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/13.js, requires-body=true, timeout=60, tag=13
+http-response ^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/13.js, requires-body=true, timeout=60, tag=13
 
 [MITM]
-hostname = example.com
+hostname = m-station2.axs.com.sg
