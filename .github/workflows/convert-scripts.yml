@@ -225,6 +225,18 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          
+          # Fetch the latest changes
+          git fetch origin
+          
+          # Try to rebase or merge
+          git pull --rebase origin main || git pull origin main
+          
+          # Add the converted files
           git add Surge/ Loon/
+          
+          # Commit if there are changes
           git commit -m "Auto convert scripts to Surge and Loon formats" || echo "No changes to commit"
-          git push
+          
+          # Push with force if needed (use with caution)
+          git push || git push --force
