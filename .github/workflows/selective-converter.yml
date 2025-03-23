@@ -1,4 +1,4 @@
-name: Fixed Platform Converter
+name: Selective Converter
 
 on:
   push:
@@ -42,9 +42,9 @@ jobs:
             echo "WARNING: Neither folder found, defaulting to QuantumultX"
           fi
       
-      - name: Create fixed converter script
+      - name: Create selective converter script
         run: |
-          cat > fixed_converter.py << 'EOF'
+          cat > selective_converter.py << 'EOF'
           import os
           import re
           import sys
@@ -114,14 +114,34 @@ jobs:
                   
                   # Extract reject rules from rewrite_local
                   rewrite_reject_rules = []
+                  map_local_rules = []
+                  
                   if rewrite_section:
                       section_content = rewrite_section.group(1)
                       for line in section_content.split('\n'):
+                          # Skip comment lines and empty lines
+                          line = line.strip()
+                          if not line or line.startswith('#'):
+                              continue
+                              
                           if ('reject' in line.lower() or 'reject-dict' in line.lower() or 'reject-img' in line.lower() or 'reject-200' in line.lower()) and not 'script' in line.lower():
                               parts = line.strip().split()
                               if len(parts) >= 2 and parts[0] and ('reject' in line.lower() or 'reject-dict' in line.lower() or 'reject-img' in line.lower() or 'reject-200' in line.lower()):
                                   if parts[0] != url_pattern:  # Skip the script-response-body URL
-                                      rewrite_reject_rules.append(parts[0])
+                                      # Determine if this should be Map Local or URL Rewrite
+                                      pattern = parts[0]
+                                      
+                                      # Check patterns that work better with Map Local
+                                      should_use_map_local = False
+                                      map_local_keywords = ['api', 'json', 'data', 'gw', 'app', 'ad', 'ads', 'stats', 'log', 'stats']
+                                      
+                                      # Check for patterns that typically work better with Map Local
+                                      if any(keyword in pattern.lower() for keyword in map_local_keywords):
+                                          # Use Map Local for API endpoints, JSON responses, ad servers, stats/logs
+                                          map_local_rules.append(pattern)
+                                      else:
+                                          # Use URL Rewrite for other types
+                                          rewrite_reject_rules.append(pattern)
                   
                   # Extract filter rules from filter_local
                   filter_rules = []
@@ -170,6 +190,7 @@ jobs:
                       'hostname': hostname,
                       'script_path': script_path,
                       'rewrite_reject_rules': rewrite_reject_rules,
+                      'map_local_rules': map_local_rules,
                       'filter_rules': filter_rules,
                       'script_responses': script_responses
                   }
@@ -186,6 +207,7 @@ jobs:
                       'hostname': "example.com",
                       'script_path': os.path.basename(file_path),
                       'rewrite_reject_rules': [],
+                      'map_local_rules': [],
                       'filter_rules': [],
                       'script_responses': []
                   }
@@ -205,12 +227,19 @@ jobs:
                       surge_template += f"\n{rule_type},{pattern},{action}"
                   surge_template += "\n"
               
-              # Add Map Local section for rewrite reject rules (Surge uses Map Local for better rejection)
+              # Add URL Rewrite section for rules that work better with standard rejection
               if info['rewrite_reject_rules']:
-                  surge_template += "\n[Map Local]"
+                  surge_template += "\n[URL Rewrite]"
                   for rule in info['rewrite_reject_rules']:
+                      surge_template += f"\n{rule} - reject"
+                  surge_template += "\n"
+              
+              # Add Map Local section for rules that work better with Map Local
+              if info['map_local_rules']:
+                  surge_template += "\n[Map Local]"
+                  for rule in info['map_local_rules']:
                       # Determine if it's likely JSON or text response
-                      if 'api' in rule.lower() or 'json' in rule.lower() or 'gw' in rule.lower():
+                      if 'api' in rule.lower() or 'json' in rule.lower() or 'gw' in rule.lower() or '.com/api' in rule.lower():
                           surge_template += f"\n{rule} data-type=text data=\"{{}}\" status-code=200"
                       else:
                           surge_template += f"\n{rule} data-type=text data=\" \" status-code=200"
@@ -242,28 +271,32 @@ jobs:
                       loon_template += f"\n{rule_type},{pattern},{action}"
                   loon_template += "\n"
               
-              # Add URL Rewrite section for rewrite reject rules for Loon
-              if info['rewrite_reject_rules']:
+              # Add URL Rewrite section for all reject rules (both standard and map local ones)
+              if info['rewrite_reject_rules'] or info['map_local_rules']:
                   loon_template += "\n[URL Rewrite]"
+                  # First add regular rewrite rules
                   for rule in info['rewrite_reject_rules']:
+                      loon_template += f"\n{rule} reject"
+                  # Then add rules that would be Map Local in Surge
+                  for rule in info['map_local_rules']:
                       loon_template += f"\n{rule} reject"
                   loon_template += "\n"
               
-              # Add Script section for script-response-body for Loon
+              # Add Script section for script-response-body
               if info['script_responses']:
                   loon_template += "\n[Script]"
                   for pattern, script_filename in info['script_responses']:
                       loon_template += f"\nhttp-response {pattern} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{script_filename}, requires-body=true, timeout=60, tag={info['filename']}"
                   loon_template += "\n"
               
-              # Add MITM section for Loon
+              # Add MITM section
               loon_template += f"\n[MITM]\nhostname = {info['hostname']}"
               
               return surge_template, loon_template
           
           def main():
               if len(sys.argv) < 2:
-                  print("Usage: python fixed_converter.py <qx_script_file>")
+                  print("Usage: python selective_converter.py <qx_script_file>")
                   sys.exit(1)
               
               file_path = sys.argv[1]
@@ -280,6 +313,7 @@ jobs:
               print(f"  Script path: {info['script_path']}")
               print(f"  Hostname: {info['hostname']}")
               print(f"  Rewrite reject rules: {', '.join(info['rewrite_reject_rules']) if info['rewrite_reject_rules'] else 'None'}")
+              print(f"  Map Local rules: {', '.join(info['map_local_rules']) if info['map_local_rules'] else 'None'}")
               print(f"  Filter rules: {', '.join([f'{r[0]},{r[1]},{r[2]}' for r in info['filter_rules']]) if info['filter_rules'] else 'None'}")
               print(f"  Script responses: {', '.join([f'{r[0]}:{r[1]}' for r in info['script_responses']]) if info['script_responses'] else 'None'}")
               
@@ -316,7 +350,7 @@ jobs:
           for file in "$QX_FOLDER"/*.js; do
             if [ -f "$file" ]; then
               echo "Processing $file..."
-              python fixed_converter.py "$file"
+              python selective_converter.py "$file"
             else
               echo "Warning: No .js files found in $QX_FOLDER"
               break
@@ -328,5 +362,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Surge/ Loon/
-          git diff-index --quiet HEAD || git commit -m "Auto-generate platform-optimized templates" || echo "No changes to commit"
+          git diff-index --quiet HEAD || git commit -m "Auto-generate templates with selective optimizations" || echo "No changes to commit"
           git push || echo "Nothing to push"
