@@ -32,19 +32,58 @@ jobs:
           const path = require('path');
 
           function convertToSurge(content) {
-            // Basic conversion rules from QuantumultX to Surge
             let newContent = content;
             
-            // Replace common headers
-            newContent = newContent.replace(/\/\*\s*QuantumultX\s*\*\//, '// #!name=Script Name\n// #!desc=Script Description');
+            // Extract metadata from QuantumultX script
+            let name = 'Converted Script';
+            let desc = 'Converted from QuantumultX';
             
-            // Replace $task.fetch with $httpClient
-            newContent = newContent.replace(/\$task\.fetch/g, '$httpClient.get');
+            const nameMatch = content.match(/[\s\S]*?name\s*=\s*(.+?)[\n\r]/i);
+            const descMatch = content.match(/[\s\S]*?desc\s*=\s*(.+?)[\n\r]/i);
             
-            // Replace $done({status, headers, body})
-            newContent = newContent.replace(/\$done\(\s*\{\s*status\s*:.*?body\s*:.*?\}\s*\)/g, 
-              (match) => {
-                return match.replace('$done({', '$done(').replace('})', ')');
+            if (nameMatch && nameMatch[1]) {
+              name = nameMatch[1].trim();
+            }
+            
+            if (descMatch && descMatch[1]) {
+              desc = descMatch[1].trim();
+            }
+            
+            // Add Surge-specific headers
+            newContent = `#!name=${name}\n#!desc=${desc}\n\n` + newContent;
+            
+            // Convert QuantumultX API calls to Surge equivalents
+            // $task.fetch() to $httpClient.get()/post()
+            newContent = newContent.replace(/\$task\.fetch\s*\(\s*(\{[\s\S]*?\})\s*\)/g, (match, options) => {
+              if (options.includes('"method": "POST"') || options.includes('"method":"POST"')) {
+                return `$httpClient.post(${options}`;
+              } else {
+                return `$httpClient.get(${options}`;
+              }
+            });
+            
+            // Convert the callback structure
+            newContent = newContent.replace(/\.then\s*\(\s*response\s*=>\s*\{([\s\S]*?)\$done\s*\(\s*(\{[\s\S]*?\})\s*\)/g, 
+              (match, innerCode, doneObj) => {
+                return `.then(function(response) {${innerCode}$done(${doneObj})`;
+              }
+            );
+            
+            // Convert $prefs to $persistentStore
+            newContent = newContent.replace(/\$prefs\.valueForKey\s*\(\s*["'](.*?)["']\s*\)/g, 
+              (match, key) => `$persistentStore.read("${key}")`);
+            newContent = newContent.replace(/\$prefs\.setValueForKey\s*\(\s*(.*?)\s*,\s*["'](.*?)["']\s*\)/g, 
+              (match, value, key) => `$persistentStore.write(${value}, "${key}")`);
+            
+            // Convert $notify to $notification.post
+            newContent = newContent.replace(/\$notify\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)(?:\s*,\s*(.*?))?\s*\)/g, 
+              (match, title, subtitle, body, options) => {
+                if (options) {
+                  // Handle the options parameter if needed
+                  return `$notification.post(${title}, ${subtitle}, ${body})`;
+                } else {
+                  return `$notification.post(${title}, ${subtitle}, ${body})`;
+                }
               }
             );
             
@@ -52,17 +91,60 @@ jobs:
           }
 
           function convertToLoon(content) {
-            // Basic conversion rules from QuantumultX to Loon
             let newContent = content;
             
-            // Replace common headers
-            newContent = newContent.replace(/\/\*\s*QuantumultX\s*\*\//, 
-              '/**\n * @name Script Name\n * @desc Script Description\n * @version 1.0.0\n */');
+            // Extract metadata from QuantumultX script
+            let name = 'Converted Script';
+            let desc = 'Converted from QuantumultX';
             
-            // Replace $task.fetch with $httpClient
-            newContent = newContent.replace(/\$task\.fetch/g, '$http.get');
+            const nameMatch = content.match(/[\s\S]*?name\s*=\s*(.+?)[\n\r]/i);
+            const descMatch = content.match(/[\s\S]*?desc\s*=\s*(.+?)[\n\r]/i);
             
-            // Handle other conversions as needed
+            if (nameMatch && nameMatch[1]) {
+              name = nameMatch[1].trim();
+            }
+            
+            if (descMatch && descMatch[1]) {
+              desc = descMatch[1].trim();
+            }
+            
+            // Add Loon-specific headers
+            newContent = `#!name = ${name}\n#!desc = ${desc}\n#!openUrl = \n#!author = Converted\n#!homepage = \n#!icon = \n\n` + newContent;
+            
+            // Convert QuantumultX API calls to Loon equivalents
+            // $task.fetch() to $http.get()/post()
+            newContent = newContent.replace(/\$task\.fetch\s*\(\s*(\{[\s\S]*?\})\s*\)/g, (match, options) => {
+              if (options.includes('"method": "POST"') || options.includes('"method":"POST"')) {
+                return `$http.post(${options}`;
+              } else {
+                return `$http.get(${options}`;
+              }
+            });
+            
+            // Convert the callback structure
+            newContent = newContent.replace(/\.then\s*\(\s*response\s*=>\s*\{([\s\S]*?)\$done\s*\(\s*(\{[\s\S]*?\})\s*\)/g, 
+              (match, innerCode, doneObj) => {
+                return `, function(response) {${innerCode}$done(${doneObj})`;
+              }
+            );
+            
+            // Convert $prefs to $persistentStore
+            newContent = newContent.replace(/\$prefs\.valueForKey\s*\(\s*["'](.*?)["']\s*\)/g, 
+              (match, key) => `$storage.read("${key}")`);
+            newContent = newContent.replace(/\$prefs\.setValueForKey\s*\(\s*(.*?)\s*,\s*["'](.*?)["']\s*\)/g, 
+              (match, value, key) => `$storage.write(${value}, "${key}")`);
+            
+            // Convert $notify to $notification
+            newContent = newContent.replace(/\$notify\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)(?:\s*,\s*(.*?))?\s*\)/g, 
+              (match, title, subtitle, body, options) => {
+                if (options) {
+                  // Handle the options parameter if needed
+                  return `$notification.post(${title}, ${subtitle}, ${body})`;
+                } else {
+                  return `$notification.post(${title}, ${subtitle}, ${body})`;
+                }
+              }
+            );
             
             return newContent;
           }
@@ -70,9 +152,18 @@ jobs:
           // Main function
           function main() {
             const args = process.argv.slice(2);
-            const inputFile = args.find((arg, i) => arg === '--input' && args[i+1]).split('--input')[1]?.trim() || args[args.indexOf('--input') + 1];
-            const outputFile = args.find((arg, i) => arg === '--output' && args[i+1]).split('--output')[1]?.trim() || args[args.indexOf('--output') + 1];
-            const target = args.find((arg, i) => arg === '--target' && args[i+1]).split('--target')[1]?.trim() || args[args.indexOf('--target') + 1];
+            const inputArg = args.indexOf('--input');
+            const outputArg = args.indexOf('--output');
+            const targetArg = args.indexOf('--target');
+            
+            if (inputArg === -1 || outputArg === -1 || targetArg === -1) {
+              console.error('Usage: node convert.js --input <inputFile> --output <outputFile> --target <surge|loon>');
+              process.exit(1);
+            }
+            
+            const inputFile = args[inputArg + 1];
+            const outputFile = args[outputArg + 1];
+            const target = args[targetArg + 1];
             
             if (!inputFile || !outputFile || !target) {
               console.error('Usage: node convert.js --input <inputFile> --output <outputFile> --target <surge|loon>');
