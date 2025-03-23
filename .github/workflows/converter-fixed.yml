@@ -1,4 +1,4 @@
-name: Custom Template Converter
+name: Simple Template Converter
 
 on:
   push:
@@ -21,96 +21,62 @@ jobs:
           mkdir -p Surge
           mkdir -p Loon
       
-      - name: Create template converter script
+      - name: Convert scripts
         run: |
-          cat > template-convert.sh << 'EOF'
-          #!/bin/bash
-          
-          # Get filenames from command line
-          INPUT_FILE=$1
-          OUTPUT_SURGE=$2
-          OUTPUT_LOON=$3
-          
-          # Get the filename without extension
-          FILENAME=$(basename "$INPUT_FILE" .js)
-          
-          # Extract app name from the filename or comment
-          APP_NAME="${FILENAME}"
-          
-          # Try to find a better name from comments
-          if grep -q "📜\|🔐APP\|APP解锁" "$INPUT_FILE"; then
-            POTENTIAL_NAME=$(grep -E "📜|🔐APP|APP解锁" "$INPUT_FILE" | head -1 | sed 's/.*📜//g' | sed 's/^[[:space:]]*//')
-            if [ ! -z "$POTENTIAL_NAME" ]; then
-              APP_NAME="$POTENTIAL_NAME"
-            fi
-          fi
-          
-          # Try to extract URLs and patterns
-          URL_PATTERN=""
-          if grep -q "script-response-body\|script-request-body" "$INPUT_FILE"; then
-            URL_PATTERN=$(grep -E "([^ ]+)[ ]+url[ ]+script-(response|request)-body" "$INPUT_FILE" | head -1 | awk '{print $1}')
-          elif grep -q "\$request.url\|\$response.body" "$INPUT_FILE"; then
-            # If the file contains request or response handling, look for hostname in MITM
-            if grep -q "\[mitm\]" "$INPUT_FILE"; then
-              HOSTNAME=$(grep -A 5 "\[mitm\]" "$INPUT_FILE" | grep "hostname" | head -1 | sed -E "s/hostname[ ]*=[ ]*(.*)/\1/" | sed 's/[[:space:]]*$//' | awk -F'[ ,]' '{print $1}')
-              if [ ! -z "$HOSTNAME" ]; then
-                URL_PATTERN="^https?:\/\/${HOSTNAME}\/.*$"
+          for file in QuantumultX/*.js; do
+            # Get filename without extension
+            filename=$(basename "$file" .js)
+            echo "Converting $filename..."
+            
+            # Extract hostname from the file content
+            hostname=$(grep -A 5 "hostname" "$file" | head -1 | awk '{print $NF}')
+            
+            # If no hostname found, check if any URL patterns exist
+            if [ -z "$hostname" ]; then
+              url_pattern=$(grep -o "https://[^ \"']*" "$file" | head -1)
+              if [ ! -z "$url_pattern" ]; then
+                hostname=$(echo "$url_pattern" | sed 's|https://||' | cut -d '/' -f1)
               fi
             fi
-          fi
-          
-          # If we still don't have a pattern, search for https:// in the file
-          if [ -z "$URL_PATTERN" ]; then
-            URL_PATTERN=$(grep -o "https://[^'\" ]*" "$INPUT_FILE" | head -1 | sed 's/https:\/\//^https?:\/\//' | sed 's/\/$/\/.*$/')
-          fi
-          
-          # Extract hostname for MITM
-          HOSTNAME=""
-          if [ ! -z "$URL_PATTERN" ]; then
-            HOSTNAME=$(echo "$URL_PATTERN" | sed -E 's/^\^https\?:\/\///' | sed -E 's/\/.*$//')
-          elif grep -q "\[mitm\]" "$INPUT_FILE"; then
-            HOSTNAME=$(grep -A 5 "\[mitm\]" "$INPUT_FILE" | grep "hostname" | head -1 | sed -E "s/hostname[ ]*=[ ]*(.*)/\1/" | sed 's/[[:space:]]*$//' | awk -F'[ ,]' '{print $1}')
-          fi
-          
-          # Create Loon plugin file based on template
-          cat > "$OUTPUT_LOON" << LOON
-#!name = ${APP_NAME}🔐APP解锁
+            
+            # Use filename as default if no hostname found
+            if [ -z "$hostname" ]; then
+              hostname="example.com"
+            fi
+            
+            # Find URL pattern or create a default one
+            url_pattern=$(grep -o "^[^ ]*" "$file" | grep "^http" | head -1)
+            if [ -z "$url_pattern" ]; then
+              url_pattern="^https?://${hostname}/.*$"
+            fi
+            
+            # Create Loon plugin file
+            cat > "Loon/${filename}.plugin" << EOF
+#!name = ${filename}🔐APP解锁
 #!desc = 媒体制作 - 插件
 #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
-#!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/${FILENAME}.png
+#!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/${filename}.png
 
 [Script]
-http-response ${URL_PATTERN} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${FILENAME}.js, requires-body=true, timeout=60, tag=${FILENAME}
+http-response ${url_pattern} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${filename}.js, requires-body=true, timeout=60, tag=${filename}
 
 [MITM]
-hostname = ${HOSTNAME}
-LOON
-          
-          # Create Surge module file based on template
-          cat > "$OUTPUT_SURGE" << SURGE
-#!name = ${APP_NAME}🔐APP
+hostname = ${hostname}
+EOF
+            
+            # Create Surge module file
+            cat > "Surge/${filename}.sgmodule" << EOF
+#!name = ${filename}🔐APP
 #!desc = 媒体制作 - 模块
 #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 #!category=🔐APP
 
 [Script]
-${FILENAME} = type=http-response, pattern=${URL_PATTERN}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${FILENAME}.js, requires-body=true, max-size=-1, timeout=60
+${filename} = type=http-response, pattern=${url_pattern}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${filename}.js, requires-body=true, max-size=-1, timeout=60
 
 [MITM]
-hostname = %APPEND% ${HOSTNAME}
-SURGE
-          
-          echo "Converted $FILENAME to template format"
-          EOF
-          
-          chmod +x template-convert.sh
-      
-      - name: Convert scripts
-        run: |
-          for file in QuantumultX/*.js; do
-            filename=$(basename "$file" .js)
-            echo "Converting $filename..."
-            ./template-convert.sh "$file" "Surge/${filename}.sgmodule" "Loon/${filename}.plugin"
+hostname = %APPEND% ${hostname}
+EOF
           done
       
       - name: Commit and push changes
