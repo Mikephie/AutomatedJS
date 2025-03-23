@@ -1,6 +1,3 @@
-#!name=m-station2.axs.com.sg
-#!desc=Converted from QuantumultX
-
 /*
 📜 AXS Payment
 𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹

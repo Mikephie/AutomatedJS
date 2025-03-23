@@ -4,4 +4,4 @@
 #!icon = 
 
 [Script]
-cron "m-station2.axs.com.sg" script-path=5.js,tag=m-station2.axs.com.sg,cronexp=0 0 * * *
+cron "m-station2.axs.com.sg" script-path=6.js,tag=m-station2.axs.com.sg,cronexp=0 0 * * *

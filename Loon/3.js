@@ -1,10 +1,3 @@
-#!name = m-station2.axs.com.sg
-#!desc = Converted from QuantumultX
-#!openUrl = 
-#!author = Converted
-#!homepage = 
-#!icon = 
-
 /*
 📜 AXS Payment
 𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹𒊹
