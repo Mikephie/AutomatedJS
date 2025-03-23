@@ -13,26 +13,43 @@ async function convertScripts() {
   // Read all files from QuantumultX directory
   const files = await fs.readdir(inputDir);
 
+  if (files.length === 0) {
+    console.log('No .js files found in QuantumultX/ directory');
+    return;
+  }
+
   for (const file of files) {
     if (file.endsWith('.js')) {
       const inputPath = path.join(inputDir, file);
       const script = await fs.readFile(inputPath, 'utf-8');
+      
+      console.log(`Processing ${file}:`);
+      console.log(`Original content (first 100 chars): ${script.substring(0, 100)}...`);
 
       // Conversion for Surge
       let surgeScript = script
-        .replace(/\$httpClient\.get/g, '$http.get') // QuantumultX -> Surge HTTP client
-        .replace(/\$httpClient\.post/g, '$http.post')
-        .replace(/\$persistentStore/g, '$prefs')   // Persistent storage
-        .replace(/\$notification\.post/g, '$notify') // Notification
-        .replace(/QuantumultX/g, 'Surge');          // Generic replacement
+        .replace(/\$httpClient\.get/g, '$http.get') // HTTP GET
+        .replace(/\$httpClient\.post/g, '$http.post') // HTTP POST
+        .replace(/\$persistentStore\.write/g, '$prefs.setValueForKey') // Persistent storage write
+        .replace(/\$persistentStore\.read/g, '$prefs.valueForKey')     // Persistent storage read
+        .replace(/\$notification\.post/g, '$notify')                  // Notification
+        .replace(/Quantumult ?X/gi, 'Surge');                         // Case-insensitive name replacement
 
       // Conversion for Loon
       let loonScript = script
-        .replace(/\$httpClient\.get/g, '$http.get') // QuantumultX -> Loon HTTP client
-        .replace(/\$httpClient\.post/g, '$http.post')
-        .replace(/\$persistentStore/g, '$config')   // Persistent storage
-        .replace(/\$notification\.post/g, '$notify') // Notification
-        .replace(/QuantumultX/g, 'Loon');           // Generic replacement
+        .replace(/\$httpClient\.get/g, '$http.get') // HTTP GET
+        .replace(/\$httpClient\.post/g, '$http.post') // HTTP POST
+        .replace(/\$persistentStore\.write/g, '$config.set') // Persistent storage write
+        .replace(/\$persistentStore\.read/g, '$config.get')  // Persistent storage read
+        .replace(/\$notification\.post/g, '$notify')        // Notification
+        .replace(/Quantumult ?X/gi, 'Loon');                // Case-insensitive name replacement
+
+      // Check if any changes were made
+      const surgeChanged = surgeScript !== script;
+      const loonChanged = loonScript !== script;
+
+      console.log(`Surge conversion applied: ${surgeChanged}`);
+      console.log(`Loon conversion applied: ${loonChanged}`);
 
       // Output file paths
       const baseName = path.basename(file, '.js');
