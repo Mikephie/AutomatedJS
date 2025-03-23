@@ -1,0 +1,11 @@
+#!name = 11
+#!desc = Converted from QuantumultX
+#!author = Converted
+#!icon = 
+
+[Script]
+http-response ^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ script-path=11.js,requires-body=true,tag=11
+
+/* Original Script Reference
+Path: QuantumultX/11.js
+*/

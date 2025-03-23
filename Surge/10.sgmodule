@@ -1,0 +1,9 @@
+#!name=10
+#!desc=Converted from QuantumultX
+
+[Script]
+10 = type=http-response,pattern=^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$,requires-body=1,max-size=0,script-path=10.js
+
+/* Original Script Reference
+Path: QuantumultX/10.js
+*/
