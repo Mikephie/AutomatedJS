@@ -28,343 +28,176 @@ jobs:
         with:
           node-version: '16'
       
-      - name: Create basic converter script
+      - name: Create simplified converter script
         run: |
           mkdir -p tools
-          cat > tools/convert.js << 'EOF'
+          cat > tools/direct-convert.js << 'EOF'
           const fs = require('fs');
           const path = require('path');
 
-          function convertToSurge(content, inputFile) {
-            // Extract filename for naming
-            const filename = path.basename(inputFile, '.js');
-            
-            // Extract metadata from script if available
-            let name = filename;
-            let desc = 'Converted from QuantumultX';
-            
-            const nameMatch = content.match(/[\/\*\s]*?name\s*=\s*['"]*(.+?)['"]*[\n\r]/i);
-            const descMatch = content.match(/[\/\*\s]*?desc\s*=\s*['"]*(.+?)['"]*[\n\r]/i);
-            
-            if (nameMatch && nameMatch[1]) {
-              name = nameMatch[1].trim().replace(/['"]/g, '');
-            }
-            
-            if (descMatch && descMatch[1]) {
-              desc = descMatch[1].trim().replace(/['"]/g, '');
-            }
-            
-            // Define the Surge module header
-            let moduleContent = `#!name=${name}\n`;
-            moduleContent += `#!desc=${desc}\n\n`;
-            
-            // Determine if this is a script or rewrite file
-            const isScript = content.includes('$task.fetch') || 
-                           content.includes('$done(') || 
-                           content.includes('function') ||
-                           !content.includes('url ');
-            
-            if (isScript) {
-              // This is a script file
-              // Convert the script content with API translation
-              let scriptContent = content;
-              
-              // $task.fetch to $httpClient
-              scriptContent = scriptContent.replace(/\$task\.fetch\s*\(\s*(\{[\s\S]*?\})\s*\)/g, (match, options) => {
-                if (options.includes('"method": "POST"') || options.includes('"method":"POST"')) {
-                  return `$httpClient.post(${options}`;
-                } else {
-                  return `$httpClient.get(${options}`;
-                }
-              });
-              
-              // Convert $prefs to $persistentStore
-              scriptContent = scriptContent.replace(/\$prefs\.valueForKey\s*\(\s*["'](.*?)["']\s*\)/g, 
-                (match, key) => `$persistentStore.read("${key}")`);
-              scriptContent = scriptContent.replace(/\$prefs\.setValueForKey\s*\(\s*(.*?)\s*,\s*["'](.*?)["']\s*\)/g, 
-                (match, value, key) => `$persistentStore.write(${value}, "${key}")`);
-              
-              // Convert $notify to $notification.post
-              scriptContent = scriptContent.replace(/\$notify\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)(?:\s*,\s*(.*?))?\s*\)/g, 
-                (match, title, subtitle, body, options) => {
-                  return `$notification.post(${title}, ${subtitle}, ${body})`;
-                }
-              );
-              
-              // Create a module that references the script
-              moduleContent += `[Script]\n`;
-              moduleContent += `${name.replace(/\s+/g, '_')} = type=cron,cronexp=0 0 * * *,script-path=${filename}.js,timeout=60,wake-system=1\n`;
-              
-              return { module: moduleContent, script: scriptContent };
-            } else {
-              // This is a rewrite/rule file
-              
-              // Check for host settings
-              if (content.includes('hostname =') || content.includes('hostname=')) {
-                moduleContent += `[MITM]\n`;
-                const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
-                if (hostnameMatch && hostnameMatch[1]) {
-                  moduleContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
-                }
-              }
-              
-              // Convert rewrite rules
-              let hasRules = false;
-              
-              // Look for reject rules
-              const rejectRules = content.match(/url\s+reject(-.*?)?\s+([^\n]+)/g);
-              if (rejectRules && rejectRules.length > 0) {
-                hasRules = true;
-                moduleContent += `[URL Rewrite]\n`;
-                rejectRules.forEach(rule => {
-                  // Extract the URL pattern
-                  const urlPattern = rule.replace(/url\s+reject(?:-.*?)?\s+/, '').trim();
-                  moduleContent += `${urlPattern} - reject\n`;
-                });
-                moduleContent += '\n';
-              }
-              
-              // Look for redirect rules
-              const redirectRules = content.match(/url\s+30[27]\s+([^\n]+)\s+([^\n]+)/g);
-              if (redirectRules && redirectRules.length > 0) {
-                if (!hasRules) {
-                  moduleContent += `[URL Rewrite]\n`;
-                  hasRules = true;
-                }
-                redirectRules.forEach(rule => {
-                  // Extract from and to URLs
-                  const parts = rule.replace(/url\s+30[27]\s+/, '').trim().split(/\s+/);
-                  if (parts.length >= 2) {
-                    moduleContent += `${parts[0]} ${parts[1]} [302]\n`;
-                  }
-                });
-                moduleContent += '\n';
-              }
-              
-              // Look for response body rules
-              const bodyRules = content.match(/url\s+response-body\s+([^\n]+)\s+([^\n]+)/g);
-              if (bodyRules && bodyRules.length > 0) {
-                moduleContent += `[Script]\n`;
-                bodyRules.forEach((rule, index) => {
-                  // Extract patterns and replacement
-                  const parts = rule.replace(/url\s+response-body\s+/, '').trim().split(/\s+/);
-                  if (parts.length >= 2) {
-                    const scriptName = `body_replace_${index}`;
-                    moduleContent += `${scriptName} = type=http-response,pattern=${parts[0]},requires-body=1,script-path=${filename}_${scriptName}.js\n`;
-                    
-                    // Create a simple replacement script
-                    const bodyScript = `
-                    var body = $response.body;
-                    body = body.replace(/${parts[0]}/g, '${parts[1]}');
-                    $done({body});
-                    `;
-                    
-                    // Write the replacement script
-                    fs.writeFileSync(path.join(path.dirname(inputFile), '..', 'Surge', `${filename}_${scriptName}.js`), bodyScript);
-                  }
-                });
-                moduleContent += '\n';
-              }
-              
-              return { module: moduleContent, script: null };
-            }
-          }
-
-          function convertToLoon(content, inputFile) {
-            // Extract filename for naming
-            const filename = path.basename(inputFile, '.js');
-            
-            // Extract metadata from script if available
-            let name = filename;
-            let desc = 'Converted from QuantumultX';
-            
-            const nameMatch = content.match(/[\/\*\s]*?name\s*=\s*['"]*(.+?)['"]*[\n\r]/i);
-            const descMatch = content.match(/[\/\*\s]*?desc\s*=\s*['"]*(.+?)['"]*[\n\r]/i);
-            
-            if (nameMatch && nameMatch[1]) {
-              name = nameMatch[1].trim().replace(/['"]/g, '');
-            }
-            
-            if (descMatch && descMatch[1]) {
-              desc = descMatch[1].trim().replace(/['"]/g, '');
-            }
-            
-            // Define the Loon plugin header
-            let pluginContent = `#!name = ${name}\n`;
-            pluginContent += `#!desc = ${desc}\n`;
-            pluginContent += `#!author = Converted\n`;
-            pluginContent += `#!icon = \n\n`;
-            
-            // Determine if this is a script or rewrite file
-            const isScript = content.includes('$task.fetch') || 
-                           content.includes('$done(') || 
-                           content.includes('function') ||
-                           !content.includes('url ');
-            
-            if (isScript) {
-              // This is a script file
-              // Convert the script content with API translation
-              let scriptContent = content;
-              
-              // $task.fetch to $http
-              scriptContent = scriptContent.replace(/\$task\.fetch\s*\(\s*(\{[\s\S]*?\})\s*\)/g, (match, options) => {
-                if (options.includes('"method": "POST"') || options.includes('"method":"POST"')) {
-                  return `$http.post(${options}`;
-                } else {
-                  return `$http.get(${options}`;
-                }
-              });
-              
-              // Convert $prefs to $storage
-              scriptContent = scriptContent.replace(/\$prefs\.valueForKey\s*\(\s*["'](.*?)["']\s*\)/g, 
-                (match, key) => `$persistentStore.read("${key}")`);
-              scriptContent = scriptContent.replace(/\$prefs\.setValueForKey\s*\(\s*(.*?)\s*,\s*["'](.*?)["']\s*\)/g, 
-                (match, value, key) => `$persistentStore.write(${value}, "${key}")`);
-              
-              // Convert $notify to $notification
-              scriptContent = scriptContent.replace(/\$notify\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)(?:\s*,\s*(.*?))?\s*\)/g, 
-                (match, title, subtitle, body, options) => {
-                  return `$notification.post(${title}, ${subtitle}, ${body})`;
-                }
-              );
-              
-              // Create a plugin that references the script
-              pluginContent += `[Script]\n`;
-              pluginContent += `cron "${name}" script-path=${filename}.js,tag=${name.replace(/\s+/g, '_')},cronexp=0 0 * * *\n`;
-              
-              return { plugin: pluginContent, script: scriptContent };
-            } else {
-              // This is a rewrite/rule file
-              
-              // Check for host settings
-              if (content.includes('hostname =') || content.includes('hostname=')) {
-                pluginContent += `[MITM]\n`;
-                const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
-                if (hostnameMatch && hostnameMatch[1]) {
-                  pluginContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
-                }
-              }
-              
-              // Convert rewrite rules
-              let hasRules = false;
-              
-              // Look for reject rules
-              const rejectRules = content.match(/url\s+reject(-.*?)?\s+([^\n]+)/g);
-              if (rejectRules && rejectRules.length > 0) {
-                hasRules = true;
-                pluginContent += `[Rewrite]\n`;
-                rejectRules.forEach(rule => {
-                  // Extract the URL pattern
-                  const urlPattern = rule.replace(/url\s+reject(?:-.*?)?\s+/, '').trim();
-                  pluginContent += `${urlPattern} reject\n`;
-                });
-                pluginContent += '\n';
-              }
-              
-              // Look for redirect rules
-              const redirectRules = content.match(/url\s+30[27]\s+([^\n]+)\s+([^\n]+)/g);
-              if (redirectRules && redirectRules.length > 0) {
-                if (!hasRules) {
-                  pluginContent += `[Rewrite]\n`;
-                  hasRules = true;
-                }
-                redirectRules.forEach(rule => {
-                  // Extract from and to URLs
-                  const parts = rule.replace(/url\s+30[27]\s+/, '').trim().split(/\s+/);
-                  if (parts.length >= 2) {
-                    pluginContent += `${parts[0]} 302 ${parts[1]}\n`;
-                  }
-                });
-                pluginContent += '\n';
-              }
-              
-              // Look for response body rules
-              const bodyRules = content.match(/url\s+response-body\s+([^\n]+)\s+([^\n]+)/g);
-              if (bodyRules && bodyRules.length > 0) {
-                pluginContent += `[Script]\n`;
-                bodyRules.forEach((rule, index) => {
-                  // Extract patterns and replacement
-                  const parts = rule.replace(/url\s+response-body\s+/, '').trim().split(/\s+/);
-                  if (parts.length >= 2) {
-                    const scriptName = `body_replace_${index}`;
-                    pluginContent += `http-response ${parts[0]} script-path=${filename}_${scriptName}.js,requires-body=true,tag=${scriptName}\n`;
-                    
-                    // Create a simple replacement script
-                    const bodyScript = `
-                    var body = $response.body;
-                    body = body.replace(/${parts[0]}/g, '${parts[1]}');
-                    $done({body});
-                    `;
-                    
-                    // Write the replacement script
-                    fs.writeFileSync(path.join(path.dirname(inputFile), '..', 'Loon', `${filename}_${scriptName}.js`), bodyScript);
-                  }
-                });
-                pluginContent += '\n';
-              }
-              
-              return { plugin: pluginContent, script: null };
-            }
-          }
-
           // Main function
           function main() {
-            const args = process.argv.slice(2);
-            const inputArg = args.indexOf('--input');
-            const outputDir = args.indexOf('--output-dir');
-            const targetArg = args.indexOf('--target');
-            
-            if (inputArg === -1 || outputDir === -1 || targetArg === -1) {
-              console.error('Usage: node convert.js --input <inputFile> --output-dir <outputDir> --target <surge|loon>');
-              process.exit(1);
-            }
-            
-            const inputFile = args[inputArg + 1];
-            const outputDirectory = args[outputDir + 1];
-            const target = args[targetArg + 1];
-            
-            if (!inputFile || !outputDirectory || !target) {
-              console.error('Usage: node convert.js --input <inputFile> --output-dir <outputDir> --target <surge|loon>');
-              process.exit(1);
-            }
-            
             try {
-              const content = fs.readFileSync(inputFile, 'utf8');
-              const filename = path.basename(inputFile, '.js');
+              const args = process.argv.slice(2);
+              const inputArg = args.indexOf('--input');
+              const outputArg = args.indexOf('--output');
+              const targetArg = args.indexOf('--target');
               
-              // Ensure output directory exists
-              if (!fs.existsSync(outputDirectory)) {
-                fs.mkdirSync(outputDirectory, { recursive: true });
-              }
-              
-              if (target.toLowerCase() === 'surge') {
-                const { module, script } = convertToSurge(content, inputFile);
-                
-                // Write the module file
-                fs.writeFileSync(path.join(outputDirectory, `${filename}.sgmodule`), module);
-                
-                // If script content exists, write it too
-                if (script) {
-                  fs.writeFileSync(path.join(outputDirectory, `${filename}.js`), script);
-                }
-                
-                console.log(`Successfully converted ${inputFile} to Surge format in ${outputDirectory}`);
-              } else if (target.toLowerCase() === 'loon') {
-                const { plugin, script } = convertToLoon(content, inputFile);
-                
-                // Write the plugin file
-                fs.writeFileSync(path.join(outputDirectory, `${filename}.plugin`), plugin);
-                
-                // If script content exists, write it too
-                if (script) {
-                  fs.writeFileSync(path.join(outputDirectory, `${filename}.js`), script);
-                }
-                
-                console.log(`Successfully converted ${inputFile} to Loon format in ${outputDirectory}`);
-              } else {
-                console.error(`Unsupported target: ${target}. Use 'surge' or 'loon'.`);
+              if (inputArg === -1 || outputArg === -1 || targetArg === -1) {
+                console.error('Missing required arguments');
                 process.exit(1);
               }
+              
+              const inputFile = args[inputArg + 1];
+              const outputFile = args[outputArg + 1];
+              const target = args[targetArg + 1];
+              
+              if (!inputFile || !outputFile || !target) {
+                console.error('Invalid arguments');
+                process.exit(1);
+              }
+              
+              console.log(`Processing ${inputFile} to ${outputFile} for ${target}`);
+              
+              // Read the input file
+              const content = fs.readFileSync(inputFile, 'utf8');
+              
+              // Extract name and desc if available
+              let name = path.basename(inputFile, '.js');
+              let desc = "Converted from QuantumultX";
+              
+              const nameMatch = content.match(/name\s*=\s*['"]*([^'"]+)['"]*[\s,\n\r]/i);
+              const descMatch = content.match(/desc\s*=\s*['"]*([^'"]+)['"]*[\s,\n\r]/i);
+              
+              if (nameMatch && nameMatch[1]) name = nameMatch[1].trim();
+              if (descMatch && descMatch[1]) desc = descMatch[1].trim();
+              
+              // Convert based on target
+              let outputContent = '';
+              
+              if (target === 'surge') {
+                // Create Surge .sgmodule format
+                outputContent = `#!name=${name}\n`;
+                outputContent += `#!desc=${desc}\n\n`;
+                
+                // Add Script section if it appears to be a script
+                if (content.includes('$task.fetch') || content.includes('$done(') || content.includes('function')) {
+                  // Create separate js file for script
+                  const scriptFile = outputFile.replace('.sgmodule', '.js');
+                  let scriptContent = content;
+                  
+                  // Do API translations for script
+                  scriptContent = scriptContent
+                    .replace(/\$task\.fetch/g, '$httpClient.get')
+                    .replace(/\$prefs\.valueForKey/g, '$persistentStore.read')
+                    .replace(/\$prefs\.setValueForKey/g, '$persistentStore.write')
+                    .replace(/\$notify/g, '$notification.post');
+                  
+                  fs.writeFileSync(scriptFile, scriptContent);
+                  
+                  // Add script reference to the module
+                  outputContent += `[Script]\n`;
+                  outputContent += `${name.replace(/\s+/g, '_')} = type=cron,cronexp=0 0 * * *,script-path=${path.basename(scriptFile)},timeout=60,wake-system=1\n\n`;
+                } 
+                
+                // Check for rewrite rules
+                if (content.includes('url ')) {
+                  // Extract MITM hosts
+                  if (content.includes('hostname =') || content.includes('hostname=')) {
+                    outputContent += `[MITM]\n`;
+                    const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
+                    if (hostnameMatch && hostnameMatch[1]) {
+                      outputContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
+                    }
+                  }
+                  
+                  // Simple URL rewrite section
+                  outputContent += `[URL Rewrite]\n`;
+                  const urlLines = content.match(/[^\n]*url\s+[^\n]+/g) || [];
+                  urlLines.forEach(line => {
+                    if (line.includes('reject')) {
+                      // Convert reject rules
+                      const urlMatch = line.match(/([^\s]+)\s+url\s+reject/);
+                      if (urlMatch && urlMatch[1]) {
+                        outputContent += `${urlMatch[1]} - reject\n`;
+                      }
+                    } else if (line.includes('302') || line.includes('307')) {
+                      // Convert redirect rules
+                      const parts = line.split(/\s+url\s+30[27]\s+/);
+                      if (parts.length === 2) {
+                        outputContent += `${parts[0]} ${parts[1]} [302]\n`;
+                      }
+                    }
+                  });
+                }
+              } else if (target === 'loon') {
+                // Create Loon .plugin format
+                outputContent = `#!name = ${name}\n`;
+                outputContent += `#!desc = ${desc}\n`;
+                outputContent += `#!author = Converted\n`;
+                outputContent += `#!icon = \n\n`;
+                
+                // Add Script section if it appears to be a script
+                if (content.includes('$task.fetch') || content.includes('$done(') || content.includes('function')) {
+                  // Create separate js file for script
+                  const scriptFile = outputFile.replace('.plugin', '.js');
+                  let scriptContent = content;
+                  
+                  // Do API translations for script
+                  scriptContent = scriptContent
+                    .replace(/\$task\.fetch/g, '$http.get')
+                    .replace(/\$prefs\.valueForKey/g, '$persistentStore.read')
+                    .replace(/\$prefs\.setValueForKey/g, '$persistentStore.write')
+                    .replace(/\$notify/g, '$notification.post');
+                  
+                  fs.writeFileSync(scriptFile, scriptContent);
+                  
+                  // Add script reference to the plugin
+                  outputContent += `[Script]\n`;
+                  outputContent += `cron "${name}" script-path=${path.basename(scriptFile)},tag=${name.replace(/\s+/g, '_')},cronexp=0 0 * * *\n\n`;
+                }
+                
+                // Check for rewrite rules
+                if (content.includes('url ')) {
+                  // Extract MITM hosts
+                  if (content.includes('hostname =') || content.includes('hostname=')) {
+                    outputContent += `[MITM]\n`;
+                    const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
+                    if (hostnameMatch && hostnameMatch[1]) {
+                      outputContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
+                    }
+                  }
+                  
+                  // Simple Rewrite section
+                  outputContent += `[Rewrite]\n`;
+                  const urlLines = content.match(/[^\n]*url\s+[^\n]+/g) || [];
+                  urlLines.forEach(line => {
+                    if (line.includes('reject')) {
+                      // Convert reject rules
+                      const urlMatch = line.match(/([^\s]+)\s+url\s+reject/);
+                      if (urlMatch && urlMatch[1]) {
+                        outputContent += `${urlMatch[1]} reject\n`;
+                      }
+                    } else if (line.includes('302') || line.includes('307')) {
+                      // Convert redirect rules
+                      const parts = line.split(/\s+url\s+30[27]\s+/);
+                      if (parts.length === 2) {
+                        outputContent += `${parts[0]} 302 ${parts[1]}\n`;
+                      }
+                    }
+                  });
+                }
+              }
+              
+              // If all else fails, include the original content as a comment
+              if (!outputContent.includes('[Script]') && !outputContent.includes('[Rewrite]') && !outputContent.includes('[URL Rewrite]')) {
+                outputContent += `\n/* Original content: */\n\n`;
+                outputContent += content;
+              }
+              
+              // Write output file
+              fs.writeFileSync(outputFile, outputContent);
+              console.log(`Conversion successful: ${outputFile}`);
             } catch (error) {
               console.error(`Error: ${error.message}`);
               process.exit(1);
@@ -373,6 +206,27 @@ jobs:
 
           main();
           EOF
+      
+      - name: Create output directories
+        run: |
+          mkdir -p Surge
+          mkdir -p Loon
+      
+      - name: Convert QuantumultX scripts to Surge
+        run: |
+          for file in QuantumultX/*.js; do
+            filename=$(basename "$file" .js)
+            echo "Converting $filename to Surge format..."
+            node tools/direct-convert.js --input "$file" --output "Surge/${filename}.sgmodule" --target surge
+          done
+      
+      - name: Convert QuantumultX scripts to Loon
+        run: |
+          for file in QuantumultX/*.js; do
+            filename=$(basename "$file" .js)
+            echo "Converting $filename to Loon format..."
+            node tools/direct-convert.js --input "$file" --output "Loon/${filename}.plugin" --target loon
+          done
       
       - name: Create output directories
         run: |
