@@ -3,12 +3,12 @@
 #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 #!category=🔐APP
 
+[URL Rewrite]
+^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace - reject
+^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight - reject
+
 [Script]
 11 = type=http-response, pattern=^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/axs.js, requires-body=true, max-size=-1, timeout=60
 
 [MITM]
 hostname = %APPEND% m-station2.axs.com.sg
-
-[URL Rewrite]
-^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace - reject
-^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight - reject
