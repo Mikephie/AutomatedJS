@@ -4,7 +4,11 @@
 #!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/13.png
 
 [Script]
-http-response ^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/13.js, requires-body=true, timeout=60, tag=13
+http-response ^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/axs.js, requires-body=true, timeout=60, tag=13
 
 [MITM]
 hostname = m-station2.axs.com.sg
+
+[Rewrite]
+^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace reject
+^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight reject
