@@ -1,4 +1,4 @@
-name: Comprehensive Extractor
+name: Custom Rule Format Converter
 
 on:
   push:
@@ -42,9 +42,9 @@ jobs:
             echo "WARNING: Neither folder found, defaulting to QuantumultX"
           fi
       
-      - name: Create comprehensive extractor script
+      - name: Create custom rule format converter script
         run: |
-          cat > extract_comprehensive.py << 'EOF'
+          cat > extract_custom_rules.py << 'EOF'
           import os
           import re
           import sys
@@ -127,16 +127,16 @@ jobs:
                   if filter_section:
                       section_content = filter_section.group(1)
                       for line in section_content.split('\n'):
-                          if 'reject' in line:
+                          if 'reject' in line.lower():
                               # Handle url-regex format
-                              url_regex_match = re.search(r'url-regex\s*,\s*(.*?)\s*,\s*reject', line)
+                              url_regex_match = re.search(r'url-regex\s*,\s*(.*?)\s*,\s*reject', line, re.IGNORECASE)
                               if url_regex_match:
                                   pattern = url_regex_match.group(1).strip()
                                   reject_rules.append(pattern)
                               else:
                                   # Try other formats
                                   parts = line.strip().split(',')
-                                  if len(parts) >= 2 and 'reject' in parts[-1]:
+                                  if len(parts) >= 2 and 'reject' in parts[-1].lower():
                                       pattern = parts[0].strip()
                                       if pattern and not pattern.startswith('#'):
                                           reject_rules.append(pattern)
@@ -176,11 +176,11 @@ jobs:
           #!icon={info['icon']}
           """
               
-              # Add reject rules if any
+              # Add reject rules in Rule format if any
               if info['reject_rules']:
-                  template += "\n[Rewrite]"
+                  template += "\n[Rule]"
                   for rule in info['reject_rules']:
-                      template += f"\n{rule} reject"
+                      template += f"\nURL-REGEX,{rule},REJECT"
                   template += "\n"
               
               # Add Script section
@@ -198,11 +198,11 @@ jobs:
           #!author={info['author']}
           """
               
-              # Add reject rules if any
+              # Add reject rules in Rule format if any
               if info['reject_rules']:
-                  template += "\n[URL Rewrite]"
+                  template += "\n[Rule]"
                   for rule in info['reject_rules']:
-                      template += f"\n{rule} - reject"
+                      template += f"\nURL-REGEX,{rule},REJECT"
                   template += "\n"
               
               # Add Script section
@@ -215,7 +215,7 @@ jobs:
           
           def main():
               if len(sys.argv) < 2:
-                  print("Usage: python extract_comprehensive.py <qx_script_file>")
+                  print("Usage: python extract_custom_rules.py <qx_script_file>")
                   sys.exit(1)
               
               file_path = sys.argv[1]
@@ -267,7 +267,7 @@ jobs:
           for file in "$QX_FOLDER"/*.js; do
             if [ -f "$file" ]; then
               echo "Processing $file..."
-              python extract_comprehensive.py "$file"
+              python extract_custom_rules.py "$file"
             else
               echo "Warning: No .js files found in $QX_FOLDER"
               break
@@ -279,5 +279,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Surge/ Loon/
-          git diff-index --quiet HEAD || git commit -m "Auto-generate comprehensive templates" || echo "No changes to commit"
+          git diff-index --quiet HEAD || git commit -m "Auto-generate templates with custom rule format" || echo "No changes to commit"
           git push || echo "Nothing to push"
