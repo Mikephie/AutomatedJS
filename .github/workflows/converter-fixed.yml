@@ -1,4 +1,4 @@
-name: Simple Template Converter
+name: Minimal Template Converter
 
 on:
   push:
@@ -17,75 +17,48 @@ jobs:
         uses: actions/checkout@v3
         
       - name: Create directories
-        run: |
-          mkdir -p Surge
-          mkdir -p Loon
+        run: mkdir -p Surge Loon
       
-      - name: Convert scripts
+      - name: Convert scripts with fixed templates
         run: |
           for file in QuantumultX/*.js; do
-            # Get filename without extension
             filename=$(basename "$file" .js)
             echo "Converting $filename..."
             
-            # Extract hostname from the file content
-            hostname=$(grep -A 5 "hostname" "$file" | head -1 | awk '{print $NF}')
-            
-            # If no hostname found, check if any URL patterns exist
-            if [ -z "$hostname" ]; then
-              url_pattern=$(grep -o "https://[^ \"']*" "$file" | head -1)
-              if [ ! -z "$url_pattern" ]; then
-                hostname=$(echo "$url_pattern" | sed 's|https://||' | cut -d '/' -f1)
-              fi
-            fi
-            
-            # Use filename as default if no hostname found
-            if [ -z "$hostname" ]; then
-              hostname="example.com"
-            fi
-            
-            # Find URL pattern or create a default one
-            url_pattern=$(grep -o "^[^ ]*" "$file" | grep "^http" | head -1)
-            if [ -z "$url_pattern" ]; then
-              url_pattern="^https?://${hostname}/.*$"
-            fi
-            
-            # Create Loon plugin file
-            cat > "Loon/${filename}.plugin" << EOF
+            # Create Loon plugin with fixed template
+            cat > "Loon/${filename}.plugin" << EOL
 #!name = ${filename}🔐APP解锁
 #!desc = 媒体制作 - 插件
 #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 #!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/${filename}.png
 
 [Script]
-http-response ${url_pattern} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${filename}.js, requires-body=true, timeout=60, tag=${filename}
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${filename}.js, requires-body=true, timeout=60, tag=${filename}
 
 [MITM]
-hostname = ${hostname}
-EOF
+hostname = example.com
+EOL
             
-            # Create Surge module file
-            cat > "Surge/${filename}.sgmodule" << EOF
+            # Create Surge module with fixed template
+            cat > "Surge/${filename}.sgmodule" << EOL
 #!name = ${filename}🔐APP
 #!desc = 媒体制作 - 模块
 #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 #!category=🔐APP
 
 [Script]
-${filename} = type=http-response, pattern=${url_pattern}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${filename}.js, requires-body=true, max-size=-1, timeout=60
+${filename} = type=http-response, pattern=^https?://example.com/, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${filename}.js, requires-body=true, max-size=-1, timeout=60
 
 [MITM]
-hostname = %APPEND% ${hostname}
-EOF
+hostname = %APPEND% example.com
+EOL
           done
       
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          
           git add Surge/ Loon/
           git diff-index --quiet HEAD || git commit -m "Auto convert scripts"
-          
           git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
           git push
