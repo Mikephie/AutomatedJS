@@ -1,0 +1,246 @@
+name: Robust Script Converter
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'QuantumultX/*.js'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract-and-convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up environment
+        run: |
+          # Create necessary directories
+          mkdir -p Surge Loon
+          
+          # Determine QX folder name
+          if [ -d "QuantumultX" ]; then
+            echo "QX_FOLDER=QuantumultX" >> $GITHUB_ENV
+          elif [ -d "QuantumultxX" ]; then
+            echo "QX_FOLDER=QuantumultxX" >> $GITHUB_ENV
+          else
+            echo "QX_FOLDER=QuantumultX" >> $GITHUB_ENV
+            echo "WARNING: No QuantumultX folder found, defaulting to QuantumultX"
+          fi
+          
+          echo "Using folder: $QX_FOLDER"
+      
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Create robust converter script
+        run: |
+          cat > convert_script.py << 'EOF'
+          import os
+          import re
+          import sys
+          
+          def process_file(file_path):
+              print(f"Processing file: {file_path}")
+              filename = os.path.basename(file_path).replace('.js', '')
+              
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      content = f.read()
+              except UnicodeDecodeError:
+                  try:
+                      with open(file_path, 'r', encoding='latin-1') as f:
+                          content = f.read()
+                  except Exception as e:
+                      print(f"Error reading file {file_path}: {str(e)}")
+                      return
+              
+              # Extract metadata with more robust patterns
+              metadata = {}
+              metadata['filename'] = filename
+              metadata['name'] = extract_with_fallback(content, [r'#!name\s*=\s*(.*?)[\n\r]', r'name\s*=\s*[\'"]?(.*?)[\'"]?[\s,\n\r]'], filename)
+              metadata['desc'] = extract_with_fallback(content, [r'#!desc\s*=\s*(.*?)[\n\r]', r'desc\s*=\s*[\'"]?(.*?)[\'"]?[\s,\n\r]'], '模块')
+              metadata['category'] = extract_with_fallback(content, [r'#!category\s*=\s*(.*?)[\n\r]', r'category\s*=\s*[\'"]?(.*?)[\'"]?[\s,\n\r]'], '🔐APP')
+              metadata['author'] = extract_with_fallback(content, [r'#!author\s*=\s*(.*?)[\n\r]', r'author\s*=\s*[\'"]?(.*?)[\'"]?[\s,\n\r]'], '🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ')
+              metadata['icon'] = extract_with_fallback(content, [r'#!icon\s*=\s*(.*?)[\n\r]', r'icon\s*=\s*[\'"]?(.*?)[\'"]?[\s,\n\r]'], 
+                                                   f'https://raw.githubusercontent.com/Mikephie/icons/main/icon/{filename}.png')
+              
+              # Extract hostname using more robust pattern
+              hostname = extract_with_fallback(content, [r'hostname\s*=\s*(.*?)[\n\r]'], 'example.com')
+              
+              # Extract sections with more robust methods
+              filter_rules = extract_section(content, 'filter_local')
+              rewrite_rules = extract_section(content, 'rewrite_local')
+              
+              # Sort rewrite rules into categories
+              script_rules = []
+              map_local_rules = []
+              url_rewrite_rules = []
+              
+              for line in rewrite_rules:
+                  line = line.strip()
+                  if not line or line.startswith('#'):
+                      continue
+                      
+                  if 'script-response-body' in line:
+                      script_rules.append(line)
+                  elif ' reject' in line or ' reject-' in line:
+                      # Extract pattern
+                      pattern_match = re.match(r'^([^\s]+)', line)
+                      if pattern_match:
+                          pattern = pattern_match.group(1)
+                          
+                          # Determine if Map Local is better for this pattern
+                          map_local_keywords = ['api', 'json', 'data', 'gw', 'app', 'ad', 'ads', 'stats', 'log']
+                          if any(keyword in pattern.lower() for keyword in map_local_keywords):
+                              map_local_rules.append(pattern)
+                          else:
+                              url_rewrite_rules.append(pattern)
+              
+              # Create Surge module
+              create_surge_module(filename, metadata, hostname, filter_rules, url_rewrite_rules, map_local_rules, script_rules)
+              
+              # Create Loon plugin
+              create_loon_plugin(filename, metadata, hostname, filter_rules, url_rewrite_rules + map_local_rules, script_rules)
+              
+          def extract_with_fallback(content, patterns, default):
+              """Try multiple regex patterns and return the first match, or default if none match."""
+              for pattern in patterns:
+                  match = re.search(pattern, content)
+                  if match:
+                      return match.group(1).strip()
+              return default
+              
+          def extract_section(content, section_name):
+              """Extract all lines from a section until the next section or empty line."""
+              section_pattern = rf'\[{section_name}\](.*?)(?:\[|\Z)'
+              section_match = re.search(section_pattern, content, re.DOTALL | re.IGNORECASE)
+              if section_match:
+                  # Get all lines in the section, filtering out empty lines and the section header
+                  lines = section_match.group(1).strip().split('\n')
+                  return [line for line in lines if line.strip() and not line.strip().startswith('#')]
+              return []
+              
+          def create_surge_module(filename, metadata, hostname, filter_rules, url_rewrite_rules, map_local_rules, script_rules):
+              """Create a Surge module file."""
+              with open(f"Surge/{filename}.sgmodule", 'w', encoding='utf-8') as f:
+                  # Write header
+                  f.write(f"#!name = {metadata['name']}\n")
+                  f.write(f"#!desc={metadata['desc']}\n")
+                  f.write(f"#!category={metadata['category']}\n")
+                  f.write(f"#!author={metadata['author']}\n\n")
+                  
+                  # Write Rule section if needed
+                  if filter_rules:
+                      f.write("[Rule]\n")
+                      for rule in filter_rules:
+                          f.write(f"{rule}\n")
+                      f.write("\n")
+                  
+                  # Write URL Rewrite section if needed
+                  if url_rewrite_rules:
+                      f.write("[URL Rewrite]\n")
+                      for rule in url_rewrite_rules:
+                          f.write(f"{rule} - reject\n")
+                      f.write("\n")
+                  
+                  # Write Map Local section if needed
+                  if map_local_rules:
+                      f.write("[Map Local]\n")
+                      for rule in map_local_rules:
+                          if 'api' in rule.lower() or 'json' in rule.lower() or 'gw' in rule.lower():
+                              f.write(f"{rule} data-type=text data=\"{{}}\" status-code=200\n")
+                          else:
+                              f.write(f"{rule} data-type=text data=\" \" status-code=200\n")
+                      f.write("\n")
+                  
+                  # Write Script section if needed
+                  if script_rules:
+                      f.write("[Script]\n")
+                      for rule in script_rules:
+                          pattern_match = re.match(r'^([^\s]+)\s+url\s+script-response-body\s+(https?://[^\s]+)', rule)
+                          if pattern_match:
+                              pattern = pattern_match.group(1)
+                              script_url = pattern_match.group(2)
+                              script_name = os.path.basename(script_url).replace('.js', '')
+                              f.write(f"{script_name} = type=http-response, pattern={pattern}, script-path={script_url}, requires-body=true, max-size=-1, timeout=60\n")
+                      f.write("\n")
+                  
+                  # Write MITM section
+                  f.write("[MITM]\n")
+                  f.write(f"hostname = %APPEND% {hostname}\n")
+          
+          def create_loon_plugin(filename, metadata, hostname, filter_rules, url_rewrite_rules, script_rules):
+              """Create a Loon plugin file."""
+              with open(f"Loon/{filename}.plugin", 'w', encoding='utf-8') as f:
+                  # Write header
+                  f.write(f"#!name = {metadata['name']}\n")
+                  f.write(f"#!desc={metadata['desc']}\n")
+                  f.write(f"#!icon={metadata['icon']}\n")
+                  f.write(f"#!author={metadata['author']}\n")
+                  f.write(f"#!category={metadata['category']}\n\n")
+                  
+                  # Write Rule section if needed
+                  if filter_rules:
+                      f.write("[Rule]\n")
+                      for rule in filter_rules:
+                          f.write(f"{rule}\n")
+                      f.write("\n")
+                  
+                  # Write URL Rewrite section if needed
+                  if url_rewrite_rules:
+                      f.write("[URL Rewrite]\n")
+                      for rule in url_rewrite_rules:
+                          f.write(f"{rule} reject\n")
+                      f.write("\n")
+                  
+                  # Write Script section if needed
+                  if script_rules:
+                      f.write("[Script]\n")
+                      for rule in script_rules:
+                          pattern_match = re.match(r'^([^\s]+)\s+url\s+script-response-body\s+(https?://[^\s]+)', rule)
+                          if pattern_match:
+                              pattern = pattern_match.group(1)
+                              script_url = pattern_match.group(2)
+                              f.write(f"http-response {pattern} script-path={script_url}, requires-body=true, timeout=60, tag={filename}\n")
+                      f.write("\n")
+                  
+                  # Write MITM section
+                  f.write("[MITM]\n")
+                  f.write(f"hostname = {hostname}\n")
+          
+          if __name__ == "__main__":
+              if len(sys.argv) < 2:
+                  print("Usage: python convert_script.py <file_path>")
+                  sys.exit(1)
+              
+              process_file(sys.argv[1])
+          EOF
+      
+      - name: Process scripts
+        run: |
+          # Process each JS file in the folder
+          for file in "${{ env.QX_FOLDER }}"/*.js; do
+            if [ -f "$file" ]; then
+              echo "Processing $file..."
+              python convert_script.py "$file"
+            else
+              echo "Warning: No .js files found in ${{ env.QX_FOLDER }}"
+              break
+            fi
+          done
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Surge/ Loon/
+          git diff-index --quiet HEAD || git commit -m "Auto-generate templates with robust conversion" || echo "No changes to commit"
+          git push || echo "Nothing to push"
