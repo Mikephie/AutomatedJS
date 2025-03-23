@@ -69,7 +69,7 @@ jobs:
           FILE_TYPE="${{ github.event.inputs.file_type }}"
           echo "Processing file: $FILE_PATH with basename: $FILENAME (Type: $FILE_TYPE)"
           
-          # Node.js script with corrected output and detection
+          # Node.js script with all values quoted
           cat > analyze.js << 'EOF'
           const fs = require('fs');
           const path = require('path');
@@ -135,30 +135,35 @@ jobs:
               }
               addHostname(line);
             }
-            // Collect rules
+            // Collect rules (only for rule files)
             else if (fileType === 'rule' && line.match(/^(http|\^https?:\/\/).*(url\s+(reject|script-response-body))/)) {
               rules.push(line);
             }
           }
 
-          // Fallback hostname from rules if none found
-          if (hostnames.size === 0 && rules.length > 0) {
-            rules.forEach(rule => {
-              const domainMatch = rule.match(/https?:\/\/([^\/]+)/);
+          // Fallback hostname from rules or JS content if none found
+          if (hostnames.size === 0) {
+            if (fileType === 'rule' && rules.length > 0) {
+              rules.forEach(rule => {
+                const domainMatch = rule.match(/https?:\/\/([^\/]+)/);
+                if (domainMatch) hostnames.add(domainMatch[1]);
+              });
+            } else if (fileType === 'script') {
+              const domainMatch = content.match(/https?:\/\/([^\/]+)/);
               if (domainMatch) hostnames.add(domainMatch[1]);
-            });
+            }
           }
 
-          // Output shell-compatible variables with quoted HOSTNAMES
-          process.stdout.write(`NAME=${metadata.name}\n`);
-          process.stdout.write(`DESC=${metadata.desc}\n`);
-          process.stdout.write(`AUTHOR=${metadata.author}\n`);
-          process.stdout.write(`CATEGORY=${metadata.category}\n`);
-          process.stdout.write(`UPDATE=${metadata.update}\n`);
-          process.stdout.write(`CHANNEL=${metadata.channel}\n`);
-          process.stdout.write(`HOSTNAMES="${Array.from(hostnames).join(', ')}"\n`); // Quoted
-          process.stdout.write(`RULES=${rules.join('\n')}\n`);
-          process.stdout.write(`FILE_TYPE=${fileType}\n`);
+          // Output shell-compatible variables with all values quoted
+          process.stdout.write(`NAME="${metadata.name}"\n`);
+          process.stdout.write(`DESC="${metadata.desc}"\n`);
+          process.stdout.write(`AUTHOR="${metadata.author}"\n`);
+          process.stdout.write(`CATEGORY="${metadata.category}"\n`);
+          process.stdout.write(`UPDATE="${metadata.update}"\n`);
+          process.stdout.write(`CHANNEL="${metadata.channel}"\n`);
+          process.stdout.write(`HOSTNAMES="${Array.from(hostnames).join(', ')}"\n`);
+          process.stdout.write(`RULES="${rules.join('\n')}"\n`);
+          process.stdout.write(`FILE_TYPE="${fileType}"\n`);
           EOF
           
           # Run analysis and capture output
