@@ -1,4 +1,4 @@
-name: Custom Rule Format Converter
+name: Separated Rules Converter
 
 on:
   push:
@@ -42,9 +42,9 @@ jobs:
             echo "WARNING: Neither folder found, defaulting to QuantumultX"
           fi
       
-      - name: Create custom rule format converter script
+      - name: Create separated rules converter script
         run: |
-          cat > extract_custom_rules.py << 'EOF'
+          cat > extract_separated_rules.py << 'EOF'
           import os
           import re
           import sys
@@ -89,6 +89,8 @@ jobs:
                   
                   # Find script-response-body block
                   rewrite_section = re.search(r'\[rewrite_local\](.*?)(\[|$)', content, re.DOTALL | re.IGNORECASE)
+                  response_pattern_match = None
+                  
                   if rewrite_section:
                       section_content = rewrite_section.group(1)
                       
@@ -110,36 +112,39 @@ jobs:
                   if hostname_match:
                       hostname = hostname_match.group(1).strip()
                   
-                  # Extract reject rules from both rewrite_local and filter_local
-                  reject_rules = []
-                  
-                  # Check rewrite_local section
+                  # Extract reject rules from rewrite_local
+                  rewrite_reject_rules = []
                   if rewrite_section:
                       section_content = rewrite_section.group(1)
                       for line in section_content.split('\n'):
-                          if 'reject' in line and not 'script' in line:
+                          if 'reject' in line.lower() and not 'script' in line.lower():
                               parts = line.strip().split()
-                              if len(parts) >= 2 and parts[0] and 'reject' in line:
-                                  reject_rules.append(parts[0])
+                              if len(parts) >= 2 and parts[0] and 'reject' in line.lower():
+                                  if parts[0] != url_pattern:  # Skip the script-response-body URL
+                                      rewrite_reject_rules.append(parts[0])
                   
-                  # Check filter_local section
+                  # Extract filter rules from filter_local
+                  filter_rules = []
                   filter_section = re.search(r'\[filter_local\](.*?)(\[|$)', content, re.DOTALL | re.IGNORECASE)
                   if filter_section:
                       section_content = filter_section.group(1)
                       for line in section_content.split('\n'):
                           if 'reject' in line.lower():
                               # Handle url-regex format
-                              url_regex_match = re.search(r'url-regex\s*,\s*(.*?)\s*,\s*reject', line, re.IGNORECASE)
+                              url_regex_match = re.search(r'(url-regex)\s*,\s*(.*?)\s*,\s*(reject)', line, re.IGNORECASE)
                               if url_regex_match:
-                                  pattern = url_regex_match.group(1).strip()
-                                  reject_rules.append(pattern)
+                                  rule_type = url_regex_match.group(1).upper()
+                                  pattern = url_regex_match.group(2).strip()
+                                  action = url_regex_match.group(3).upper()
+                                  filter_rules.append((rule_type, pattern, action))
                               else:
                                   # Try other formats
                                   parts = line.strip().split(',')
-                                  if len(parts) >= 2 and 'reject' in parts[-1].lower():
-                                      pattern = parts[0].strip()
-                                      if pattern and not pattern.startswith('#'):
-                                          reject_rules.append(pattern)
+                                  if len(parts) >= 3 and 'reject' in parts[-1].lower():
+                                      rule_type = parts[0].strip().upper()
+                                      pattern = parts[1].strip()
+                                      action = parts[2].strip().upper()
+                                      filter_rules.append((rule_type, pattern, action))
                   
                   return {
                       'filename': filename,
@@ -151,7 +156,8 @@ jobs:
                       'url_pattern': url_pattern,
                       'hostname': hostname,
                       'script_path': script_path,
-                      'reject_rules': reject_rules
+                      'rewrite_reject_rules': rewrite_reject_rules,
+                      'filter_rules': filter_rules
                   }
               except Exception as e:
                   print(f"Error processing {file_path}: {str(e)}", file=sys.stderr)
@@ -165,7 +171,8 @@ jobs:
                       'url_pattern': "^https?://example.com/",
                       'hostname': "example.com",
                       'script_path': os.path.basename(file_path),
-                      'reject_rules': []
+                      'rewrite_reject_rules': [],
+                      'filter_rules': []
                   }
           
           def create_loon_template(info):
@@ -176,11 +183,18 @@ jobs:
           #!icon={info['icon']}
           """
               
-              # Add reject rules in Rule format if any
-              if info['reject_rules']:
+              # Add Rule section for filter rules
+              if info['filter_rules']:
                   template += "\n[Rule]"
-                  for rule in info['reject_rules']:
-                      template += f"\nURL-REGEX,{rule},REJECT"
+                  for rule_type, pattern, action in info['filter_rules']:
+                      template += f"\n{rule_type},{pattern},{action}"
+                  template += "\n"
+              
+              # Add Rewrite section for rewrite reject rules
+              if info['rewrite_reject_rules']:
+                  template += "\n[Rewrite]"
+                  for rule in info['rewrite_reject_rules']:
+                      template += f"\n{rule} reject"
                   template += "\n"
               
               # Add Script section
@@ -198,11 +212,18 @@ jobs:
           #!author={info['author']}
           """
               
-              # Add reject rules in Rule format if any
-              if info['reject_rules']:
+              # Add Rule section for filter rules
+              if info['filter_rules']:
                   template += "\n[Rule]"
-                  for rule in info['reject_rules']:
-                      template += f"\nURL-REGEX,{rule},REJECT"
+                  for rule_type, pattern, action in info['filter_rules']:
+                      template += f"\n{rule_type},{pattern},{action}"
+                  template += "\n"
+              
+              # Add URL Rewrite section for rewrite reject rules
+              if info['rewrite_reject_rules']:
+                  template += "\n[URL Rewrite]"
+                  for rule in info['rewrite_reject_rules']:
+                      template += f"\n{rule} - reject"
                   template += "\n"
               
               # Add Script section
@@ -215,7 +236,7 @@ jobs:
           
           def main():
               if len(sys.argv) < 2:
-                  print("Usage: python extract_custom_rules.py <qx_script_file>")
+                  print("Usage: python extract_separated_rules.py <qx_script_file>")
                   sys.exit(1)
               
               file_path = sys.argv[1]
@@ -231,7 +252,8 @@ jobs:
               print(f"  URL pattern: {info['url_pattern']}")
               print(f"  Script path: {info['script_path']}")
               print(f"  Hostname: {info['hostname']}")
-              print(f"  Reject rules: {', '.join(info['reject_rules']) if info['reject_rules'] else 'None'}")
+              print(f"  Rewrite reject rules: {', '.join(info['rewrite_reject_rules']) if info['rewrite_reject_rules'] else 'None'}")
+              print(f"  Filter rules: {', '.join([f'{r[0]},{r[1]},{r[2]}' for r in info['filter_rules']]) if info['filter_rules'] else 'None'}")
               
               # Create templates
               loon_content = create_loon_template(info)
@@ -267,7 +289,7 @@ jobs:
           for file in "$QX_FOLDER"/*.js; do
             if [ -f "$file" ]; then
               echo "Processing $file..."
-              python extract_custom_rules.py "$file"
+              python extract_separated_rules.py "$file"
             else
               echo "Warning: No .js files found in $QX_FOLDER"
               break
@@ -279,5 +301,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Surge/ Loon/
-          git diff-index --quiet HEAD || git commit -m "Auto-generate templates with custom rule format" || echo "No changes to commit"
+          git diff-index --quiet HEAD || git commit -m "Auto-generate templates with separated rules" || echo "No changes to commit"
           git push || echo "Nothing to push"
