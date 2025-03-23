@@ -4,7 +4,9 @@
 #!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/axs.png
 #!category=🚫广告
 
+
 [Script]
 http-response ^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/axs.js, requires-body=true, timeout=60, tag=11
+
 [MITM]
-hostname = %APPEND% m-station2.axs.com.sg
+hostname = m-station2.axs.com.sg
