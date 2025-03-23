@@ -239,4 +239,4 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add Surge/ Loon/
           git diff-index --quiet HEAD || git commit -m "Auto-generate templates with direct shell conversion" || echo "No changes to commit"
-          git push || echo "Nothing to push"8
+          git push || echo "Nothing to push"
