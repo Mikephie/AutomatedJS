@@ -5,7 +5,8 @@
 hostname = %APPEND% m-station2.axs.com.sg
 
 [URL Rewrite]
-
+^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace - reject
+^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight - reject
 [Script]
 10 = type=http-response,pattern=^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$,requires-body=1,max-size=0,script-path=10.js
 
@@ -14,5 +15,20 @@ hostname = %APPEND% m-station2.axs.com.sg
 ^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace reject
 ^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight reject
 ^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ url script-response-body https://raw.githubusercontent.com/Mikephie/Script/main/qx/axs.js
-
+[mitm]
+hostname = m-station2.axs.com.sg
+*/
+// 主脚本函数...
+let url = $request.url;
+// 处理InfoPage请求
+if (url.includes('/InfoPage/')) {
+  console.log("[AXS拦截] 处理请求: " + url);
+  
+  // 创建一个简单的自动关闭HTML
+  const autoCloseHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <style>
 */
