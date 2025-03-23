@@ -1,6 +1,10 @@
-name: Exact Metadata Extractor
+name: Auto-Trigger Template Generator
 
 on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'QuantumultX/*.js'  # Adjusted to match your folder name
   workflow_dispatch:
 
 permissions:
@@ -21,6 +25,24 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
+      
+      - name: Determine folder name
+        id: folders
+        run: |
+          # Check which folder exists and set it as a variable
+          if [ -d "QuantumultX" ]; then
+            echo "QX_FOLDER=QuantumultX" >> $GITHUB_OUTPUT
+            echo "Using folder: QuantumultX"
+          elif [ -d "QuantumultxX" ]; then
+            echo "QX_FOLDER=QuantumultxX" >> $GITHUB_OUTPUT
+            echo "Using folder: QuantumultxX"
+          else
+            # List directories to help troubleshoot
+            echo "Available directories:"
+            ls -la
+            echo "QX_FOLDER=QuantumultX" >> $GITHUB_OUTPUT
+            echo "WARNING: Neither folder found, defaulting to QuantumultX"
+          fi
       
       - name: Create exact metadata extractor script
         run: |
@@ -155,7 +177,6 @@ jobs:
           #!desc={info['desc']}
           #!category={info['category']}
           #!author={info['author']}
-          #!icon={info['icon']}
           """
               
               # Add reject rules if any
@@ -215,10 +236,23 @@ jobs:
       
       - name: Process scripts
         run: |
-          # Process each file with exact metadata extractor
-          for file in QuantumultX/*.js; do
-            echo "Processing $file..."
-            python extract_exact.py "$file"
+          # Use the determined folder name
+          QX_FOLDER="${{ steps.folders.outputs.QX_FOLDER }}"
+          echo "Using folder: $QX_FOLDER"
+          
+          # List all files in the folder for debugging
+          echo "Files in $QX_FOLDER:"
+          ls -la "$QX_FOLDER" || echo "Cannot list files in $QX_FOLDER"
+          
+          # Process each JS file in the folder
+          for file in "$QX_FOLDER"/*.js; do
+            if [ -f "$file" ]; then
+              echo "Processing $file..."
+              python extract_exact.py "$file"
+            else
+              echo "Warning: No .js files found in $QX_FOLDER"
+              break
+            fi
           done
       
       - name: Commit and push changes
@@ -226,5 +260,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Surge/ Loon/
-          git commit -m "Add templates with exact original metadata" || echo "No changes to commit"
+          git diff-index --quiet HEAD || git commit -m "Auto-generate templates from ${{ steps.folders.outputs.QX_FOLDER }}" || echo "No changes to commit"
           git push || echo "Nothing to push"
