@@ -11,6 +11,10 @@ on:
       - 'QuantumultX/*.js'
   workflow_dispatch:  # Allow manual triggering
 
+# Add explicit permissions for the GITHUB_TOKEN
+permissions:
+  contents: write
+
 jobs:
   convert:
     runs-on: ubuntu-latest
@@ -223,8 +227,8 @@ jobs:
       
       - name: Commit and push changes
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           
           # Fetch the latest changes
           git fetch origin
@@ -236,7 +240,10 @@ jobs:
           git add Surge/ Loon/
           
           # Commit if there are changes
-          git commit -m "Auto convert scripts to Surge and Loon formats" || echo "No changes to commit"
+          git diff-index --quiet HEAD || git commit -m "Auto convert scripts to Surge and Loon formats"
           
-          # Push with force if needed (use with caution)
-          git push || git push --force
+          # Set remote URL with token for authentication
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+          
+          # Push with more verbose output
+          git push origin main
