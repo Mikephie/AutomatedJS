@@ -44,55 +44,39 @@ jobs:
         run: |
           FILENAME="${{ github.event.inputs.filename }}"
           echo "Looking for files matching: *${FILENAME}*"
-          
           FILE_PATH=$(find . -type f -not -path "./Surge/*" -not -path "./Loon/*" -name "*${FILENAME}*" | sort -r | head -1)
-          
           if [ -z "$FILE_PATH" ]; then
             echo "No exact match found, trying case-insensitive search..."
             FILE_PATH=$(find . -type f -not -path "./Surge/*" -not -path "./Loon/*" -iname "*${FILENAME}*" | sort -r | head -1)
           fi
-          
           if [ -z "$FILE_PATH" ]; then
             echo "Could not find any file matching: ${FILENAME}"
             echo "Available files:"
             find . -type f
             exit 1
           fi
-          
           echo "Found file: $FILE_PATH"
           echo "file_path=$FILE_PATH" >> $GITHUB_OUTPUT
       
-      - name: Analyze and process file with Node.js
+      - name: Analyze file with Node.js
         run: |
           FILE_PATH="${{ steps.find_file.outputs.file_path }}"
           FILENAME=$(basename "$FILE_PATH" | sed 's/\.[^.]*$//')
           FILE_TYPE="${{ github.event.inputs.file_type }}"
           echo "Processing file: $FILE_PATH with basename: $FILENAME (Type: $FILE_TYPE)"
           
-          # Node.js script with explicit EOF
           cat > analyze.js << 'ANALYSIS_EOF'
           const fs = require('fs');
           const path = require('path');
-
           const filePath = process.argv[2];
           const fileTypeInput = process.argv[3] || 'auto';
           const filename = path.basename(filePath).replace(/\.[^.]*$/, '');
           const content = fs.readFileSync(filePath, 'utf8');
           const lines = content.split('\n').map(line => line.trim());
-
-          let metadata = {
-            name: filename,
-            desc: 'Dynamic Module',
-            author: 'Unknown',
-            category: 'General',
-            update: 'Unknown Date',
-            channel: 'N/A',
-            hostname: 'example.com'
-          };
+          let metadata = { name: filename, desc: 'Dynamic Module', author: 'Unknown', category: 'General', update: 'Unknown Date', channel: 'N/A', hostname: 'example.com' };
           let rules = [];
           let hostnames = new Set();
           let fileType = fileTypeInput;
-
           if (fileType === 'auto') {
             if (content.match(/script-(response|request)-body/) || (filePath.match(/\.js$/) && !content.match(/url\s+(reject|script-response-body)/))) {
               fileType = 'script';
@@ -103,14 +87,10 @@ jobs:
             }
           }
           console.error(`Detected file type: ${fileType}`);
-
           const addHostname = (line) => {
             const hostnameMatch = line.match(/(?:hostname\s*=|hostname\s*=)\s*([^#]+)/i);
-            if (hostnameMatch) {
-              hostnameMatch[1].split(',').forEach(h => hostnames.add(h.trim()));
-            }
+            if (hostnameMatch) hostnameMatch[1].split(',').forEach(h => hostnames.add(h.trim()));
           };
-
           for (let line of lines) {
             if (!line) continue;
             if (line.match(/^(#|\/\/)/)) {
@@ -122,27 +102,20 @@ jobs:
               addHostname(line);
             } else if (line.match(/^\w+\s*=/)) {
               const [key, value] = line.split(/\s*=\s*/).map(s => s.trim().replace(/^["']|["']$/g, ''));
-              if (['name', 'desc', 'author', 'category', 'update', 'channel', 'hostname'].includes(key.toLowerCase())) {
-                metadata[key.toLowerCase()] = value;
-              }
+              if (['name', 'desc', 'author', 'category', 'update', 'channel', 'hostname'].includes(key.toLowerCase())) metadata[key.toLowerCase()] = value;
               addHostname(line);
             } else if (fileType === 'rule' && line.match(/^(http|\^https?:\/\/).*(url\s+(reject|script-response-body))/)) {
               rules.push(line);
             }
           }
-
           if (hostnames.size === 0) {
             if (fileType === 'rule' && rules.length > 0) {
-              rules.forEach(rule => {
-                const domainMatch = rule.match(/https?:\/\/([^\/]+)/);
-                if (domainMatch) hostnames.add(domainMatch[1]);
-              });
+              rules.forEach(rule => { const domainMatch = rule.match(/https?:\/\/([^\/]+)/); if (domainMatch) hostnames.add(domainMatch[1]); });
             } else if (fileType === 'script') {
               const domainMatch = content.match(/https?:\/\/([^\/]+)/);
               if (domainMatch) hostnames.add(domainMatch[1]);
             }
           }
-
           process.stdout.write(`NAME="${metadata.name}"\n`);
           process.stdout.write(`DESC="${metadata.desc}"\n`);
           process.stdout.write(`AUTHOR="${metadata.author}"\n`);
@@ -154,17 +127,17 @@ jobs:
           process.stdout.write(`FILE_TYPE="${fileType}"\n`);
 ANALYSIS_EOF
           
-          # Run analysis
           node analyze.js "$FILE_PATH" "$FILE_TYPE" > extracted_data.txt
-          
-          # Debug output
           echo "Contents of extracted_data.txt:"
           cat extracted_data.txt
-          
-          # Source variables
+          . ./extracted_data.txt
+      
+      - name: Generate Surge and Loon files
+        run: |
+          FILENAME=$(basename "${{ steps.find_file.outputs.file_path }}" | sed 's/\.[^.]*$//')
+          FILE_TYPE="${{ github.event.inputs.file_type }}"
           . ./extracted_data.txt
           
-          # Create Surge module
           if [ "$FILE_TYPE" = "rule" ]; then
             cat > "Surge/${FILENAME}.sgmodule" << 'SURGE_EOF'
 #!name = ${NAME}
@@ -192,7 +165,6 @@ hostname = %APPEND% ${HOSTNAMES}
 SURGE_EOF
           fi
           
-          # Create Loon plugin
           if [ "$FILE_TYPE" = "rule" ]; then
             cat > "Loon/${FILENAME}.plugin" << 'LOON_EOF'
 #!name = ${NAME}
