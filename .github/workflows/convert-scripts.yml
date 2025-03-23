@@ -54,39 +54,120 @@ jobs:
               desc = descMatch[1].trim().replace(/['"]/g, '');
             }
             
-            // Create basic Surge module
+            // Define the Surge module header
             let moduleContent = `#!name=${name}\n`;
             moduleContent += `#!desc=${desc}\n\n`;
             
-            // Convert $task.fetch to $httpClient equivalent if this is a script
-            let scriptContent = content;
+            // Determine if this is a script or rewrite file
+            const isScript = content.includes('$task.fetch') || 
+                           content.includes('$done(') || 
+                           content.includes('function') ||
+                           !content.includes('url ');
             
-            if (content.includes('$task.fetch')) {
-              scriptContent = content.replace(/\$task\.fetch/g, '$httpClient.get');
+            if (isScript) {
+              // This is a script file
+              // Convert the script content with API translation
+              let scriptContent = content;
               
+              // $task.fetch to $httpClient
+              scriptContent = scriptContent.replace(/\$task\.fetch\s*\(\s*(\{[\s\S]*?\})\s*\)/g, (match, options) => {
+                if (options.includes('"method": "POST"') || options.includes('"method":"POST"')) {
+                  return `$httpClient.post(${options}`;
+                } else {
+                  return `$httpClient.get(${options}`;
+                }
+              });
+              
+              // Convert $prefs to $persistentStore
+              scriptContent = scriptContent.replace(/\$prefs\.valueForKey\s*\(\s*["'](.*?)["']\s*\)/g, 
+                (match, key) => `$persistentStore.read("${key}")`);
+              scriptContent = scriptContent.replace(/\$prefs\.setValueForKey\s*\(\s*(.*?)\s*,\s*["'](.*?)["']\s*\)/g, 
+                (match, value, key) => `$persistentStore.write(${value}, "${key}")`);
+              
+              // Convert $notify to $notification.post
+              scriptContent = scriptContent.replace(/\$notify\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)(?:\s*,\s*(.*?))?\s*\)/g, 
+                (match, title, subtitle, body, options) => {
+                  return `$notification.post(${title}, ${subtitle}, ${body})`;
+                }
+              );
+              
+              // Create a module that references the script
               moduleContent += `[Script]\n`;
-              moduleContent += `${name.replace(/\s+/g, '_')} = type=cron,cronexp=0 0 * * *,script-path=${filename}.js,timeout=60,wake-system=1\n\n`;
+              moduleContent += `${name.replace(/\s+/g, '_')} = type=cron,cronexp=0 0 * * *,script-path=${filename}.js,timeout=60,wake-system=1\n`;
               
-              // Also include original QuantumultX content as comment
-              moduleContent += `/*\nOriginal QuantumultX script preserved in ${filename}.js\n*/`;
-              
-              // No need to return the script content, it will be written separately
               return { module: moduleContent, script: scriptContent };
-            }
-            
-            // For rewrite/rule files, maintain a simplified structure
-            if (content.includes('hostname =')) {
-              moduleContent += `[MITM]\n`;
-              const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
-              if (hostnameMatch && hostnameMatch[1]) {
-                moduleContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
+            } else {
+              // This is a rewrite/rule file
+              
+              // Check for host settings
+              if (content.includes('hostname =') || content.includes('hostname=')) {
+                moduleContent += `[MITM]\n`;
+                const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
+                if (hostnameMatch && hostnameMatch[1]) {
+                  moduleContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
+                }
               }
+              
+              // Convert rewrite rules
+              let hasRules = false;
+              
+              // Look for reject rules
+              const rejectRules = content.match(/url\s+reject(-.*?)?\s+([^\n]+)/g);
+              if (rejectRules && rejectRules.length > 0) {
+                hasRules = true;
+                moduleContent += `[URL Rewrite]\n`;
+                rejectRules.forEach(rule => {
+                  // Extract the URL pattern
+                  const urlPattern = rule.replace(/url\s+reject(?:-.*?)?\s+/, '').trim();
+                  moduleContent += `${urlPattern} - reject\n`;
+                });
+                moduleContent += '\n';
+              }
+              
+              // Look for redirect rules
+              const redirectRules = content.match(/url\s+30[27]\s+([^\n]+)\s+([^\n]+)/g);
+              if (redirectRules && redirectRules.length > 0) {
+                if (!hasRules) {
+                  moduleContent += `[URL Rewrite]\n`;
+                  hasRules = true;
+                }
+                redirectRules.forEach(rule => {
+                  // Extract from and to URLs
+                  const parts = rule.replace(/url\s+30[27]\s+/, '').trim().split(/\s+/);
+                  if (parts.length >= 2) {
+                    moduleContent += `${parts[0]} ${parts[1]} [302]\n`;
+                  }
+                });
+                moduleContent += '\n';
+              }
+              
+              // Look for response body rules
+              const bodyRules = content.match(/url\s+response-body\s+([^\n]+)\s+([^\n]+)/g);
+              if (bodyRules && bodyRules.length > 0) {
+                moduleContent += `[Script]\n`;
+                bodyRules.forEach((rule, index) => {
+                  // Extract patterns and replacement
+                  const parts = rule.replace(/url\s+response-body\s+/, '').trim().split(/\s+/);
+                  if (parts.length >= 2) {
+                    const scriptName = `body_replace_${index}`;
+                    moduleContent += `${scriptName} = type=http-response,pattern=${parts[0]},requires-body=1,script-path=${filename}_${scriptName}.js\n`;
+                    
+                    // Create a simple replacement script
+                    const bodyScript = `
+                    var body = $response.body;
+                    body = body.replace(/${parts[0]}/g, '${parts[1]}');
+                    $done({body});
+                    `;
+                    
+                    // Write the replacement script
+                    fs.writeFileSync(path.join(path.dirname(inputFile), '..', 'Surge', `${filename}_${scriptName}.js`), bodyScript);
+                  }
+                });
+                moduleContent += '\n';
+              }
+              
+              return { module: moduleContent, script: null };
             }
-            
-            // Include original content as comment
-            moduleContent += `/*\nOriginal QuantumultX content:\n\n${content}\n*/`;
-            
-            return { module: moduleContent, script: null };
           }
 
           function convertToLoon(content, inputFile) {
@@ -108,41 +189,122 @@ jobs:
               desc = descMatch[1].trim().replace(/['"]/g, '');
             }
             
-            // Create basic Loon plugin
+            // Define the Loon plugin header
             let pluginContent = `#!name = ${name}\n`;
             pluginContent += `#!desc = ${desc}\n`;
             pluginContent += `#!author = Converted\n`;
             pluginContent += `#!icon = \n\n`;
             
-            // Convert $task.fetch to $http equivalent if this is a script
-            let scriptContent = content;
+            // Determine if this is a script or rewrite file
+            const isScript = content.includes('$task.fetch') || 
+                           content.includes('$done(') || 
+                           content.includes('function') ||
+                           !content.includes('url ');
             
-            if (content.includes('$task.fetch')) {
-              scriptContent = content.replace(/\$task\.fetch/g, '$http.get');
+            if (isScript) {
+              // This is a script file
+              // Convert the script content with API translation
+              let scriptContent = content;
               
+              // $task.fetch to $http
+              scriptContent = scriptContent.replace(/\$task\.fetch\s*\(\s*(\{[\s\S]*?\})\s*\)/g, (match, options) => {
+                if (options.includes('"method": "POST"') || options.includes('"method":"POST"')) {
+                  return `$http.post(${options}`;
+                } else {
+                  return `$http.get(${options}`;
+                }
+              });
+              
+              // Convert $prefs to $storage
+              scriptContent = scriptContent.replace(/\$prefs\.valueForKey\s*\(\s*["'](.*?)["']\s*\)/g, 
+                (match, key) => `$persistentStore.read("${key}")`);
+              scriptContent = scriptContent.replace(/\$prefs\.setValueForKey\s*\(\s*(.*?)\s*,\s*["'](.*?)["']\s*\)/g, 
+                (match, value, key) => `$persistentStore.write(${value}, "${key}")`);
+              
+              // Convert $notify to $notification
+              scriptContent = scriptContent.replace(/\$notify\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)(?:\s*,\s*(.*?))?\s*\)/g, 
+                (match, title, subtitle, body, options) => {
+                  return `$notification.post(${title}, ${subtitle}, ${body})`;
+                }
+              );
+              
+              // Create a plugin that references the script
               pluginContent += `[Script]\n`;
-              pluginContent += `cron "${name}" script-path=${filename}.js,tag=${name.replace(/\s+/g, '_')},cronexp=0 0 * * *\n\n`;
+              pluginContent += `cron "${name}" script-path=${filename}.js,tag=${name.replace(/\s+/g, '_')},cronexp=0 0 * * *\n`;
               
-              // Also include original QuantumultX content as comment
-              pluginContent += `/*\nOriginal QuantumultX script preserved in ${filename}.js\n*/`;
-              
-              // No need to return the script content, it will be written separately
               return { plugin: pluginContent, script: scriptContent };
-            }
-            
-            // For rewrite/rule files, maintain a simplified structure
-            if (content.includes('hostname =')) {
-              pluginContent += `[MITM]\n`;
-              const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
-              if (hostnameMatch && hostnameMatch[1]) {
-                pluginContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
+            } else {
+              // This is a rewrite/rule file
+              
+              // Check for host settings
+              if (content.includes('hostname =') || content.includes('hostname=')) {
+                pluginContent += `[MITM]\n`;
+                const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
+                if (hostnameMatch && hostnameMatch[1]) {
+                  pluginContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
+                }
               }
+              
+              // Convert rewrite rules
+              let hasRules = false;
+              
+              // Look for reject rules
+              const rejectRules = content.match(/url\s+reject(-.*?)?\s+([^\n]+)/g);
+              if (rejectRules && rejectRules.length > 0) {
+                hasRules = true;
+                pluginContent += `[Rewrite]\n`;
+                rejectRules.forEach(rule => {
+                  // Extract the URL pattern
+                  const urlPattern = rule.replace(/url\s+reject(?:-.*?)?\s+/, '').trim();
+                  pluginContent += `${urlPattern} reject\n`;
+                });
+                pluginContent += '\n';
+              }
+              
+              // Look for redirect rules
+              const redirectRules = content.match(/url\s+30[27]\s+([^\n]+)\s+([^\n]+)/g);
+              if (redirectRules && redirectRules.length > 0) {
+                if (!hasRules) {
+                  pluginContent += `[Rewrite]\n`;
+                  hasRules = true;
+                }
+                redirectRules.forEach(rule => {
+                  // Extract from and to URLs
+                  const parts = rule.replace(/url\s+30[27]\s+/, '').trim().split(/\s+/);
+                  if (parts.length >= 2) {
+                    pluginContent += `${parts[0]} 302 ${parts[1]}\n`;
+                  }
+                });
+                pluginContent += '\n';
+              }
+              
+              // Look for response body rules
+              const bodyRules = content.match(/url\s+response-body\s+([^\n]+)\s+([^\n]+)/g);
+              if (bodyRules && bodyRules.length > 0) {
+                pluginContent += `[Script]\n`;
+                bodyRules.forEach((rule, index) => {
+                  // Extract patterns and replacement
+                  const parts = rule.replace(/url\s+response-body\s+/, '').trim().split(/\s+/);
+                  if (parts.length >= 2) {
+                    const scriptName = `body_replace_${index}`;
+                    pluginContent += `http-response ${parts[0]} script-path=${filename}_${scriptName}.js,requires-body=true,tag=${scriptName}\n`;
+                    
+                    // Create a simple replacement script
+                    const bodyScript = `
+                    var body = $response.body;
+                    body = body.replace(/${parts[0]}/g, '${parts[1]}');
+                    $done({body});
+                    `;
+                    
+                    // Write the replacement script
+                    fs.writeFileSync(path.join(path.dirname(inputFile), '..', 'Loon', `${filename}_${scriptName}.js`), bodyScript);
+                  }
+                });
+                pluginContent += '\n';
+              }
+              
+              return { plugin: pluginContent, script: null };
             }
-            
-            // Include original content as comment
-            pluginContent += `/*\nOriginal QuantumultX content:\n\n${content}\n*/`;
-            
-            return { plugin: pluginContent, script: null };
           }
 
           // Main function
