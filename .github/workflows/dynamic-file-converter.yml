@@ -178,58 +178,58 @@ jobs:
           
           # Create Surge module
           if [ "$FILE_TYPE" = "rule" ]; then
-            cat > "Surge/${FILENAME}.sgmodule" << EOF
-            #!name = ${NAME}
-            #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
-            #!author = ${AUTHOR}
-            #!category = ${CATEGORY}
-            
-            ${RULES}
-            
-            [MITM]
-            hostname = %APPEND% ${HOSTNAMES}
-            EOF
+            cat > "Surge/${FILENAME}.sgmodule" << 'EOF'
+#!name = ${NAME}
+#!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
+#!author = ${AUTHOR}
+#!category = ${CATEGORY}
+
+${RULES}
+
+[MITM]
+hostname = %APPEND% ${HOSTNAMES}
+EOF
           else
-            cat > "Surge/${FILENAME}.sgmodule" << EOF
-            #!name = ${NAME}
-            #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
-            #!author = ${AUTHOR}
-            #!category = ${CATEGORY}
-            
-            [Script]
-            ${FILENAME} = type=http-response, pattern=^https?://${HOSTNAMES}/, script-path=https://raw.githubusercontent.com/user/repo/main/${FILENAME}.js, requires-body=true, max-size=-1, timeout=60
-            
-            [MITM]
-            hostname = %APPEND% ${HOSTNAMES}
-            EOF
+            cat > "Surge/${FILENAME}.sgmodule" << 'EOF'
+#!name = ${NAME}
+#!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
+#!author = ${AUTHOR}
+#!category = ${CATEGORY}
+
+[Script]
+${FILENAME} = type=http-response, pattern=^https?://${HOSTNAMES}/, script-path=https://raw.githubusercontent.com/user/repo/main/${FILENAME}.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% ${HOSTNAMES}
+EOF
           fi
           
           # Create Loon plugin
           if [ "$FILE_TYPE" = "rule" ]; then
-            cat > "Loon/${FILENAME}.plugin" << EOF
-            #!name = ${NAME}
-            #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
-            #!author = ${AUTHOR}
-            #!category = ${CATEGORY}
-            
-            ${RULES}
-            
-            [MITM]
-            hostname = ${HOSTNAMES}
-            EOF
+            cat > "Loon/${FILENAME}.plugin" << 'EOF'
+#!name = ${NAME}
+#!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
+#!author = ${AUTHOR}
+#!category = ${CATEGORY}
+
+${RULES}
+
+[MITM]
+hostname = ${HOSTNAMES}
+EOF
           else
-            cat > "Loon/${FILENAME}.plugin" << EOF
-            #!name = ${NAME}
-            #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
-            #!author = ${AUTHOR}
-            #!category = ${CATEGORY}
-            
-            [Script]
-            http-response ^https?://${HOSTNAMES}/ script-path=https://raw.githubusercontent.com/user/repo/main/${FILENAME}.js, requires-body=true, timeout=60, tag=${FILENAME}
-            
-            [MITM]
-            hostname = ${HOSTNAMES}
-            EOF
+            cat > "Loon/${FILENAME}.plugin" << 'EOF'
+#!name = ${NAME}
+#!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
+#!author = ${AUTHOR}
+#!category = ${CATEGORY}
+
+[Script]
+http-response ^https?://${HOSTNAMES}/ script-path=https://raw.githubusercontent.com/user/repo/main/${FILENAME}.js, requires-body=true, timeout=60, tag=${FILENAME}
+
+[MITM]
+hostname = ${HOSTNAMES}
+EOF
           fi
           
           echo "Created Surge module: Surge/${FILENAME}.sgmodule"
