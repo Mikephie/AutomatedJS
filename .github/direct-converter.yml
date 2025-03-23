@@ -1,0 +1,253 @@
+name: Direct Script Converter
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Create directories
+        run: |
+          mkdir -p Surge
+          mkdir -p Loon
+      
+      - name: Convert to Surge
+        run: |
+          for file in QuantumultX/*.js; do
+            filename=$(basename "$file" .js)
+            echo "Converting $filename to Surge..."
+            
+            # Extract name and description if available
+            NAME=$(grep -o 'name\s*=\s*['"'"'"]*[^'"'"'",]*['"'"'",]*' "$file" | head -1 | sed 's/name\s*=\s*['"'"'"]*\([^'"'"'",]*\)['"'"'",]*/\1/')
+            DESC=$(grep -o 'desc\s*=\s*['"'"'"]*[^'"'"'",]*['"'"'",]*' "$file" | head -1 | sed 's/desc\s*=\s*['"'"'"]*\([^'"'"'",]*\)['"'"'",]*/\1/')
+            
+            # Default values if not found
+            NAME=${NAME:-$filename}
+            DESC=${DESC:-"Converted from QuantumultX"}
+            
+            # Extract mitm hostnames if available
+            HOSTNAMES=$(grep -o 'hostname\s*=\s*[^"]*' "$file" | head -1 | sed 's/hostname\s*=\s*//')
+            
+            # Create Surge module file
+            cat > "Surge/${filename}.sgmodule" << EOF
+#!name=${NAME}
+#!desc=${DESC}
+
+EOF
+            
+            # Process based on file content
+            if grep -q "script-response-body\|script-request-body" "$file"; then
+              # This is a response/request modification script
+              
+              # Extract the URL pattern and script type
+              PATTERN=$(grep -o '[^ ]*\s*url\s*script-\(response\|request\)-body' "$file" | head -1 | awk '{print $1}')
+              if grep -q "script-response-body" "$file"; then
+                SCRIPT_TYPE="response"
+              else
+                SCRIPT_TYPE="request"
+              fi
+              
+              # Copy the actual script to a js file
+              cp "$file" "Surge/${filename}.js"
+              
+              # Create a proper module reference
+              cat >> "Surge/${filename}.sgmodule" << EOF
+[Script]
+${NAME} = type=http-${SCRIPT_TYPE},pattern=${PATTERN},requires-body=1,max-size=0,script-path=${filename}.js
+
+EOF
+            elif grep -q "\$task.fetch\|\$done" "$file"; then
+              # This is likely a task/cron script
+              
+              # Copy the script with API replacements
+              sed 's/\$task\.fetch/\$httpClient.get/g; s/\$prefs\.valueForKey/\$persistentStore.read/g; s/\$prefs\.setValueForKey/\$persistentStore.write/g; s/\$notify/\$notification.post/g' "$file" > "Surge/${filename}.js"
+              
+              # Create a proper module reference
+              cat >> "Surge/${filename}.sgmodule" << EOF
+[Script]
+${NAME} = type=cron,cronexp=0 0 * * *,wake-system=1,timeout=60,script-path=${filename}.js
+
+EOF
+            elif grep -q "hostname\|url reject\|url 302" "$file"; then
+              # This is a rewrite/reject rule file
+              
+              # Add MITM section if there are hostnames
+              if [ ! -z "$HOSTNAMES" ]; then
+                cat >> "Surge/${filename}.sgmodule" << EOF
+[MITM]
+hostname = %APPEND% ${HOSTNAMES}
+
+EOF
+              fi
+              
+              # Extract and convert reject rules
+              if grep -q "url reject" "$file"; then
+                cat >> "Surge/${filename}.sgmodule" << EOF
+[URL Rewrite]
+EOF
+                grep -o '[^ ]*\s*url\s*reject[^ ]*' "$file" | while read -r line; do
+                  URL_PATTERN=$(echo "$line" | awk '{print $1}')
+                  echo "${URL_PATTERN} - reject" >> "Surge/${filename}.sgmodule"
+                done
+                echo "" >> "Surge/${filename}.sgmodule"
+              fi
+              
+              # Extract and convert redirect rules
+              if grep -q "url 30[27]" "$file"; then
+                if ! grep -q "\[URL Rewrite\]" "Surge/${filename}.sgmodule"; then
+                  cat >> "Surge/${filename}.sgmodule" << EOF
+[URL Rewrite]
+EOF
+                fi
+                grep -o '[^ ]*\s*url\s*30[27]\s*[^ ]*' "$file" | while read -r line; do
+                  parts=($line)
+                  if [ ${#parts[@]} -ge 4 ]; then
+                    echo "${parts[0]} ${parts[3]} [302]" >> "Surge/${filename}.sgmodule"
+                  fi
+                done
+                echo "" >> "Surge/${filename}.sgmodule"
+              fi
+            else
+              # If we can't determine the type, just copy the script
+              cp "$file" "Surge/${filename}.js"
+              
+              # Create a generic module reference
+              cat >> "Surge/${filename}.sgmodule" << EOF
+[Script]
+${NAME} = type=cron,cronexp=0 0 * * *,wake-system=1,timeout=60,script-path=${filename}.js
+
+EOF
+            fi
+          done
+      
+      - name: Convert to Loon
+        run: |
+          for file in QuantumultX/*.js; do
+            filename=$(basename "$file" .js)
+            echo "Converting $filename to Loon..."
+            
+            # Extract name and description if available
+            NAME=$(grep -o 'name\s*=\s*['"'"'"]*[^'"'"'",]*['"'"'",]*' "$file" | head -1 | sed 's/name\s*=\s*['"'"'"]*\([^'"'"'",]*\)['"'"'",]*/\1/')
+            DESC=$(grep -o 'desc\s*=\s*['"'"'"]*[^'"'"'",]*['"'"'",]*' "$file" | head -1 | sed 's/desc\s*=\s*['"'"'"]*\([^'"'"'",]*\)['"'"'",]*/\1/')
+            
+            # Default values if not found
+            NAME=${NAME:-$filename}
+            DESC=${DESC:-"Converted from QuantumultX"}
+            
+            # Extract mitm hostnames if available
+            HOSTNAMES=$(grep -o 'hostname\s*=\s*[^"]*' "$file" | head -1 | sed 's/hostname\s*=\s*//')
+            
+            # Create Loon plugin file
+            cat > "Loon/${filename}.plugin" << EOF
+#!name = ${NAME}
+#!desc = ${DESC}
+#!author = Converted
+#!icon = 
+
+EOF
+            
+            # Process based on file content
+            if grep -q "script-response-body\|script-request-body" "$file"; then
+              # This is a response/request modification script
+              
+              # Extract the URL pattern and script type
+              PATTERN=$(grep -o '[^ ]*\s*url\s*script-\(response\|request\)-body' "$file" | head -1 | awk '{print $1}')
+              if grep -q "script-response-body" "$file"; then
+                SCRIPT_TYPE="response"
+              else
+                SCRIPT_TYPE="request"
+              fi
+              
+              # Copy the actual script to a js file
+              cp "$file" "Loon/${filename}.js"
+              
+              # Create a proper plugin reference
+              cat >> "Loon/${filename}.plugin" << EOF
+[Script]
+http-${SCRIPT_TYPE} ${PATTERN} script-path=${filename}.js,requires-body=true,tag=${NAME}
+
+EOF
+            elif grep -q "\$task.fetch\|\$done" "$file"; then
+              # This is likely a task/cron script
+              
+              # Copy the script with API replacements
+              sed 's/\$task\.fetch/\$http.get/g; s/\$prefs\.valueForKey/\$persistentStore.read/g; s/\$prefs\.setValueForKey/\$persistentStore.write/g; s/\$notify/\$notification.post/g' "$file" > "Loon/${filename}.js"
+              
+              # Create a proper plugin reference
+              cat >> "Loon/${filename}.plugin" << EOF
+[Script]
+cron "${NAME}" script-path=${filename}.js,tag=${NAME},cronexp=0 0 * * *
+
+EOF
+            elif grep -q "hostname\|url reject\|url 302" "$file"; then
+              # This is a rewrite/reject rule file
+              
+              # Add MITM section if there are hostnames
+              if [ ! -z "$HOSTNAMES" ]; then
+                cat >> "Loon/${filename}.plugin" << EOF
+[MITM]
+hostname = ${HOSTNAMES}
+
+EOF
+              fi
+              
+              # Extract and convert reject rules
+              if grep -q "url reject" "$file"; then
+                cat >> "Loon/${filename}.plugin" << EOF
+[Rewrite]
+EOF
+                grep -o '[^ ]*\s*url\s*reject[^ ]*' "$file" | while read -r line; do
+                  URL_PATTERN=$(echo "$line" | awk '{print $1}')
+                  echo "${URL_PATTERN} reject" >> "Loon/${filename}.plugin"
+                done
+                echo "" >> "Loon/${filename}.plugin"
+              fi
+              
+              # Extract and convert redirect rules
+              if grep -q "url 30[27]" "$file"; then
+                if ! grep -q "\[Rewrite\]" "Loon/${filename}.plugin"; then
+                  cat >> "Loon/${filename}.plugin" << EOF
+[Rewrite]
+EOF
+                fi
+                grep -o '[^ ]*\s*url\s*30[27]\s*[^ ]*' "$file" | while read -r line; do
+                  parts=($line)
+                  if [ ${#parts[@]} -ge 4 ]; then
+                    echo "${parts[0]} 302 ${parts[3]}" >> "Loon/${filename}.plugin"
+                  fi
+                done
+                echo "" >> "Loon/${filename}.plugin"
+              fi
+            else
+              # If we can't determine the type, just copy the script
+              cp "$file" "Loon/${filename}.js"
+              
+              # Create a generic plugin reference
+              cat >> "Loon/${filename}.plugin" << EOF
+[Script]
+cron "${NAME}" script-path=${filename}.js,tag=${NAME},cronexp=0 0 * * *
+
+EOF
+            fi
+          done
+          
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add Surge/ Loon/
+          git diff-index --quiet HEAD || git commit -m "Auto convert scripts"
+          
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+          git push
