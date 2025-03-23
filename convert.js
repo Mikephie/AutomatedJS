@@ -33,40 +33,61 @@ async function convertScripts() {
       let ruleSection = '';
       let scriptSection = '';
       let mitmSection = '';
-      let hostname = '';
+      let metadata = {
+        name: baseName,
+        desc: '',
+        author: '',
+        icon: '',
+        category: ''
+      };
 
       lines.forEach(line => {
-        if (line.startsWith('[filter_local]')) ruleSection += '[Rule]\n';
+        // Parse metadata from comments
+        if (line.startsWith('#!desc=')) metadata.desc = line.replace('#!desc=', '');
+        else if (line.startsWith('#!category=')) metadata.category = line.replace('#!category=', '');
+        else if (line.startsWith('#!author=')) metadata.author = line.replace('#!author=', '');
+        else if (line.startsWith('#!icon=')) metadata.icon = line.replace('#!icon=', '');
+        
+        // Parse sections
+        else if (line.startsWith('[filter_local]')) ruleSection += '[Rule]\n';
         else if (line.startsWith('[rewrite_local]')) scriptSection += '[Script]\n';
+        else if (line.startsWith('[mitm]')) mitmSection += '[MITM]\n';
         else if (line.includes('url-regex') && line.includes('reject')) {
           const [, pattern] = line.match(/url-regex,(.*?),reject/) || [];
-          if (pattern) {
-            ruleSection += `URL-REGEX,"${pattern}",REJECT\n`;
-          }
+          if (pattern) ruleSection += `URL-REGEX,"${pattern}",REJECT\n`;
         }
         else if (line.includes('url script-response-body')) {
           const [, url, scriptUrl] = line.match(/(^.*?)\s+url\s+script-response-body\s+(.*)/) || [];
           if (url && scriptUrl) {
-            // Surge script format
             scriptSection += `${baseName} = type=http-response, pattern=${url}, script-path=${scriptUrl}, requires-body=true, max-size=-1, timeout=60\n`;
-            // Extract hostname for MITM (simplified extraction)
-            const hostMatch = url.match(/https?:\/\/([^\/]+)/);
-            if (hostMatch) hostname = hostMatch[1];
           }
+        }
+        else if (line.startsWith('hostname =')) {
+          const [, hostname] = line.match(/hostname = (.*)/) || [];
+          if (hostname) mitmSection += `hostname = %APPEND% ${hostname}\n`;
         }
       });
 
-      // Add MITM section for Surge
-      if (hostname) mitmSection = `[MITM]\nhostname = %APPEND% ${hostname}`;
-
-      // Surge .sgmodule format
-      const surgeModule = `${ruleSection}${scriptSection}${mitmSection}`.trim();
+      // Surge .sgmodule format with metadata as comments
+      const surgeHeader = `// Name: ${metadata.name}\n` +
+                          (metadata.desc ? `// Desc: ${metadata.desc}\n` : '') +
+                          (metadata.author ? `// Author: ${metadata.author}\n` : '') +
+                          (metadata.icon ? `// Icon: ${metadata.icon}\n` : '') +
+                          (metadata.category ? `// Category: ${metadata.category}\n` : '');
+      const surgeModule = `${surgeHeader}\n${ruleSection}${scriptSection}${mitmSection}`.trim();
       const surgeOutput = path.join(surgeDir, `${baseName}.sgmodule`);
       await fs.writeFile(surgeOutput, surgeModule);
       console.log(`Generated ${baseName}.sgmodule for Surge`);
       console.log(`Surge content (first 100 chars): ${surgeModule.substring(0, 100)}...`);
 
-      // Loon .plugin format (reset scriptSection for Loon-specific format)
+      // Loon .plugin format with #! metadata
+      const loonHeader = `#!name=${metadata.name}\n` +
+                         (metadata.desc ? `#!desc=${metadata.desc}\n` : '') +
+                         (metadata.author ? `#!author=${metadata.author}\n` : '') +
+                         (metadata.icon ? `#!icon=${metadata.icon}\n` : '') +
+                         (metadata.category ? `#!category=${metadata.category}\n` : '');
+
+      // Reset scriptSection for Loon-specific format
       scriptSection = '[Script]\n';
       lines.forEach(line => {
         if (line.includes('url script-response-body')) {
@@ -77,13 +98,7 @@ async function convertScripts() {
         }
       });
 
-      const loonPlugin = `[Plugin]\n` +
-                         `Name = ${baseName}\n` +
-                         `Desc = Converted from QuantumultX\n` +
-                         `Author = xAI\n` +
-                         `Version = 1.0\n` +
-                         `URL = https://github.com/your-repo\n` +
-                         `\n${ruleSection}${scriptSection}`.trim();
+      const loonPlugin = `${loonHeader}\n${ruleSection}${scriptSection}${mitmSection}`.trim();
       const loonOutput = path.join(loonDir, `${baseName}.plugin`);
       await fs.writeFile(loonOutput, loonPlugin);
       console.log(`Generated ${baseName}.plugin for Loon`);
