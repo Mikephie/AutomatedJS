@@ -1,11 +1,13 @@
-[Plugin]
-Name = axs
-Desc = Converted from QuantumultX
-Author = xAI
-Version = 1.0
-URL = https://github.com/your-repo
+#!name=axs
+#!desc=去弹窗+主页广告
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/axs.png
+#!category=🚫广告
+
 [Rule]
 URL-REGEX,"^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace",REJECT
 URL-REGEX,"^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight",REJECT
 [Script]
 http-response ^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/axs.js, requires-body=true, timeout=60, tag=axs
+[MITM]
+hostname = %APPEND% m-station2.axs.com.sg
