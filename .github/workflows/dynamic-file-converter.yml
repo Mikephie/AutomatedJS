@@ -45,7 +45,6 @@ jobs:
           FILENAME="${{ github.event.inputs.filename }}"
           echo "Looking for files matching: *${FILENAME}*"
           
-          # Exclude Surge/ and Loon/ directories to avoid processing output files
           FILE_PATH=$(find . -type f -not -path "./Surge/*" -not -path "./Loon/*" -name "*${FILENAME}*" | sort -r | head -1)
           
           if [ -z "$FILE_PATH" ]; then
@@ -70,7 +69,7 @@ jobs:
           FILE_TYPE="${{ github.event.inputs.file_type }}"
           echo "Processing file: $FILE_PATH with basename: $FILENAME (Type: $FILE_TYPE)"
           
-          # Node.js script with corrected output
+          # Node.js script with corrected output and detection
           cat > analyze.js << 'EOF'
           const fs = require('fs');
           const path = require('path');
@@ -97,9 +96,9 @@ jobs:
 
           // Auto-detect file type
           if (fileType === 'auto') {
-            if (content.match(/script-(response|request)-body/) || filePath.match(/\.js$/)) {
+            if (content.match(/script-(response|request)-body/) || (filePath.match(/\.js$/) && !content.match(/url\s+(reject|script-response-body)/))) {
               fileType = 'script';
-            } else if (content.match(/^(#|\/\/)/) || content.match(/url\s+(reject|script-response-body)/)) {
+            } else if (content.match(/url\s+(reject|script-response-body)/) || (content.match(/^(#|\/\/)/) && content.match(/\^https?:\/\//))) {
               fileType = 'rule';
             } else {
               fileType = 'config';
@@ -115,7 +114,7 @@ jobs:
             }
           };
 
-          // Parse file based on type
+          // Parse file
           for (let line of lines) {
             if (!line) continue;
 
@@ -137,7 +136,7 @@ jobs:
               addHostname(line);
             }
             // Collect rules
-            else if (fileType === 'rule' && line.match(/^(http|\^https?)/)) {
+            else if (fileType === 'rule' && line.match(/^(http|\^https?:\/\/).*(url\s+(reject|script-response-body))/)) {
               rules.push(line);
             }
           }
@@ -150,14 +149,14 @@ jobs:
             });
           }
 
-          // Output shell-compatible variables
+          // Output shell-compatible variables with quoted HOSTNAMES
           process.stdout.write(`NAME=${metadata.name}\n`);
           process.stdout.write(`DESC=${metadata.desc}\n`);
           process.stdout.write(`AUTHOR=${metadata.author}\n`);
           process.stdout.write(`CATEGORY=${metadata.category}\n`);
           process.stdout.write(`UPDATE=${metadata.update}\n`);
           process.stdout.write(`CHANNEL=${metadata.channel}\n`);
-          process.stdout.write(`HOSTNAMES=${Array.from(hostnames).join(', ')}\n`);
+          process.stdout.write(`HOSTNAMES="${Array.from(hostnames).join(', ')}"\n`); // Quoted
           process.stdout.write(`RULES=${rules.join('\n')}\n`);
           process.stdout.write(`FILE_TYPE=${fileType}\n`);
           EOF
