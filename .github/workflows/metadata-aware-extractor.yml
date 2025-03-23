@@ -1,4 +1,4 @@
-name: Metadata-Aware Extractor
+name: Exact Metadata Extractor
 
 on:
   workflow_dispatch:
@@ -22,9 +22,9 @@ jobs:
         with:
           python-version: '3.x'
       
-      - name: Create metadata-aware Python extractor script
+      - name: Create exact metadata extractor script
         run: |
-          cat > extract_metadata.py << 'EOF'
+          cat > extract_exact.py << 'EOF'
           import os
           import re
           import sys
@@ -44,7 +44,7 @@ jobs:
                       script_name = name_match.group(1).strip()
                   
                   # Extract metadata directly from source
-                  desc = "媒体制作 - 模块"
+                  desc = "模块"
                   desc_match = re.search(r'#!desc\s*=\s*(.*?)[\n\r]', content)
                   if desc_match:
                       desc = desc_match.group(1).strip()
@@ -58,6 +58,11 @@ jobs:
                   author_match = re.search(r'#!author\s*=\s*(.*?)[\n\r]', content)
                   if author_match:
                       author = author_match.group(1).strip()
+                  
+                  icon = f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{filename}.png"
+                  icon_match = re.search(r'#!icon\s*=\s*(.*?)[\n\r]', content)
+                  if icon_match:
+                      icon = icon_match.group(1).strip()
                   
                   # Extract URL pattern for script-response-body
                   url_pattern = "^https?://example.com/"
@@ -101,6 +106,7 @@ jobs:
                       'desc': desc,
                       'category': category,
                       'author': author,
+                      'icon': icon,
                       'url_pattern': url_pattern,
                       'hostname': hostname,
                       'script_path': script_path,
@@ -111,9 +117,10 @@ jobs:
                   return {
                       'filename': os.path.basename(file_path).replace('.js', ''),
                       'script_name': os.path.basename(file_path).replace('.js', ''),
-                      'desc': "媒体制作 - 模块",
+                      'desc': "模块",
                       'category': "🔐APP",
                       'author': "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ",
+                      'icon': f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{os.path.basename(file_path).replace('.js', '')}.png",
                       'url_pattern': "^https?://example.com/",
                       'hostname': "example.com",
                       'script_path': os.path.basename(file_path),
@@ -121,13 +128,11 @@ jobs:
                   }
           
           def create_loon_template(info):
-              # For Loon, modify the description
-              loon_desc = info['desc'].replace("模块", "插件") if "模块" in info['desc'] else info['desc']
-              
               template = f"""#!name = {info['script_name']}🔐APP解锁
-          #!desc = {loon_desc}
-          #!author = {info['author']}
-          #!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/{info['filename']}.png
+          #!desc={info['desc']}
+          #!category={info['category']}
+          #!author={info['author']}
+          #!icon={info['icon']}
           """
               
               # Add reject rules if any
@@ -147,9 +152,9 @@ jobs:
           
           def create_surge_template(info):
               template = f"""#!name = {info['script_name']}🔐APP
-          #!desc = {info['desc']}
-          #!author = {info['author']}
+          #!desc={info['desc']}
           #!category={info['category']}
+          #!author={info['author']}
           """
               
               # Add reject rules if any
@@ -169,7 +174,7 @@ jobs:
           
           def main():
               if len(sys.argv) < 2:
-                  print("Usage: python extract_metadata.py <qx_script_file>")
+                  print("Usage: python extract_exact.py <qx_script_file>")
                   sys.exit(1)
               
               file_path = sys.argv[1]
@@ -181,6 +186,7 @@ jobs:
               print(f"  Description: {info['desc']}")
               print(f"  Category: {info['category']}")
               print(f"  Author: {info['author']}")
+              print(f"  Icon: {info['icon']}")
               print(f"  URL pattern: {info['url_pattern']}")
               print(f"  Script path: {info['script_path']}")
               print(f"  Hostname: {info['hostname']}")
@@ -208,10 +214,10 @@ jobs:
       
       - name: Process scripts
         run: |
-          # Process each file with metadata-aware Python script
+          # Process each file with exact metadata extractor
           for file in QuantumultX/*.js; do
             echo "Processing $file..."
-            python extract_metadata.py "$file"
+            python extract_exact.py "$file"
           done
       
       - name: Commit and push changes
@@ -219,5 +225,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Surge/ Loon/
-          git commit -m "Add metadata-aware templates preserving original values" || echo "No changes to commit"
+          git commit -m "Add templates with exact original metadata" || echo "No changes to commit"
           git push || echo "Nothing to push"
