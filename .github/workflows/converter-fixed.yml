@@ -1,0 +1,243 @@
+name: QX Converter (Fixed)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Create directories
+        run: |
+          mkdir -p Surge
+          mkdir -p Loon
+      
+      - name: Create fixed converter script
+        run: |
+          cat > qx-convert-fixed.sh << 'EOF'
+          #!/bin/bash
+          
+          # Get filenames from command line
+          INPUT_FILE=$1
+          OUTPUT_SURGE=$2
+          OUTPUT_LOON=$3
+          
+          # Get the filename without extension
+          FILENAME=$(basename "$INPUT_FILE" .js)
+          
+          # Read the file content
+          CONTENT=$(cat "$INPUT_FILE")
+          
+          # Extract name and description from script comment if available
+          NAME="${FILENAME}"
+          DESC="Converted from QuantumultX"
+          
+          # Try to find a better name from comments
+          if grep -q "📜" "$INPUT_FILE"; then
+            POTENTIAL_NAME=$(grep -A 1 "📜" "$INPUT_FILE" | tail -1 | sed 's/📜//g' | sed 's/^[[:space:]]*//')
+            if [ ! -z "$POTENTIAL_NAME" ]; then
+              NAME="$POTENTIAL_NAME"
+            fi
+          fi
+          
+          # Create Surge module
+          echo "#!name=${NAME}" > "$OUTPUT_SURGE"
+          echo "#!desc=${DESC}" >> "$OUTPUT_SURGE"
+          echo "" >> "$OUTPUT_SURGE"
+          
+          # Create Loon plugin
+          echo "#!name = ${NAME}" > "$OUTPUT_LOON"
+          echo "#!desc = ${DESC}" >> "$OUTPUT_LOON"
+          echo "#!author = Converted from QX" >> "$OUTPUT_LOON"
+          echo "#!icon = " >> "$OUTPUT_LOON"
+          echo "" >> "$OUTPUT_LOON"
+          
+          # Extract MITM hostnames
+          if grep -q "\[mitm\]" "$INPUT_FILE"; then
+            HOSTNAMES=$(grep -A 5 "\[mitm\]" "$INPUT_FILE" | grep "hostname" | head -1 | sed -E "s/hostname[ ]*=[ ]*(.*)/\1/" | sed 's/[[:space:]]*$//')
+            
+            if [ ! -z "$HOSTNAMES" ]; then
+              # Add MITM section to Surge module
+              echo "[MITM]" >> "$OUTPUT_SURGE"
+              echo "hostname = %APPEND% ${HOSTNAMES}" >> "$OUTPUT_SURGE"
+              echo "" >> "$OUTPUT_SURGE"
+              
+              # Add MITM section to Loon plugin
+              echo "[MITM]" >> "$OUTPUT_LOON"
+              echo "hostname = ${HOSTNAMES}" >> "$OUTPUT_LOON"
+              echo "" >> "$OUTPUT_LOON"
+            fi
+          fi
+          
+          # Check for rewrite_local section to extract rules
+          if grep -q "\[rewrite_local\]" "$INPUT_FILE"; then
+            # Extract all rules after [rewrite_local] until next section or empty line
+            REWRITE_SECTION=$(grep -A 100 "\[rewrite_local\]" "$INPUT_FILE" | sed -n '/\[rewrite_local\]/,/^\s*$/p' | tail -n +2)
+            
+            # Flag to track if we've added any reject rules
+            ADDED_REJECT_RULES=false
+            ADDED_REDIRECT_RULES=false
+            
+            # Process reject rules
+            if echo "$REWRITE_SECTION" | grep -q "reject"; then
+              # Add URL Rewrite section to Surge
+              echo "[URL Rewrite]" >> "$OUTPUT_SURGE"
+              
+              # Add Rewrite section to Loon
+              echo "[Rewrite]" >> "$OUTPUT_LOON"
+              
+              # Extract and process reject rules
+              echo "$REWRITE_SECTION" | grep "reject" | while read -r line; do
+                # Extract the URL pattern (first part of the line)
+                PATTERN=$(echo "$line" | awk '{print $1}')
+                
+                if [ ! -z "$PATTERN" ]; then
+                  ADDED_REJECT_RULES=true
+                  # Add to Surge
+                  echo "${PATTERN} - reject" >> "$OUTPUT_SURGE"
+                  
+                  # Add to Loon
+                  echo "${PATTERN} reject" >> "$OUTPUT_LOON"
+                fi
+              done
+            fi
+            
+            # Process 302/307 redirect rules
+            if echo "$REWRITE_SECTION" | grep -q " 30[27] "; then
+              # If we haven't added the rewrite section headers yet
+              if [ "$ADDED_REJECT_RULES" = false ]; then
+                echo "[URL Rewrite]" >> "$OUTPUT_SURGE"
+                echo "[Rewrite]" >> "$OUTPUT_LOON"
+              fi
+              
+              # Extract and process redirect rules
+              echo "$REWRITE_SECTION" | grep " 30[27] " | while read -r line; do
+                # Extract the URL pattern and destination
+                PATTERN=$(echo "$line" | awk '{print $1}')
+                REDIRECT_TYPE=$(echo "$line" | awk '{print $3}')
+                DESTINATION=$(echo "$line" | awk '{print $4}')
+                
+                if [ ! -z "$PATTERN" ] && [ ! -z "$DESTINATION" ]; then
+                  ADDED_REDIRECT_RULES=true
+                  # Add to Surge
+                  echo "${PATTERN} ${DESTINATION} [${REDIRECT_TYPE}]" >> "$OUTPUT_SURGE"
+                  
+                  # Add to Loon
+                  echo "${PATTERN} ${REDIRECT_TYPE} ${DESTINATION}" >> "$OUTPUT_LOON"
+                fi
+              done
+            fi
+            
+            # Add empty line after rewrite sections if we added any rules
+            if [ "$ADDED_REJECT_RULES" = true ] || [ "$ADDED_REDIRECT_RULES" = true ]; then
+              echo "" >> "$OUTPUT_SURGE"
+              echo "" >> "$OUTPUT_LOON"
+            fi
+            
+            # Process script-response-body rules
+            if echo "$REWRITE_SECTION" | grep -q "script-response-body"; then
+              # Add Script sections
+              echo "[Script]" >> "$OUTPUT_SURGE"
+              echo "[Script]" >> "$OUTPUT_LOON"
+              
+              # Extract and process script rules
+              echo "$REWRITE_SECTION" | grep "script-response-body" | while read -r line; do
+                # Extract the URL pattern (first part of the line)
+                PATTERN=$(echo "$line" | awk '{print $1}')
+                
+                if [ ! -z "$PATTERN" ]; then
+                  # Copy script for Surge and Loon
+                  cp "$INPUT_FILE" "${OUTPUT_SURGE%.sgmodule}.js"
+                  cp "$INPUT_FILE" "${OUTPUT_LOON%.plugin}.js"
+                  
+                  # Add script reference to Surge
+                  echo "${FILENAME} = type=http-response,pattern=${PATTERN},requires-body=1,max-size=0,script-path=${FILENAME}.js" >> "$OUTPUT_SURGE"
+                  
+                  # Add script reference to Loon
+                  echo "http-response ${PATTERN} script-path=${FILENAME}.js,requires-body=true,tag=${FILENAME}" >> "$OUTPUT_LOON"
+                fi
+              done
+              
+              echo "" >> "$OUTPUT_SURGE"
+              echo "" >> "$OUTPUT_LOON"
+            fi
+          else
+            # If no rewrite_local section found, handle as a regular script
+            
+            # Check if it looks like a response script
+            if grep -q "\$done({" "$INPUT_FILE" || grep -q "\$response\.body" "$INPUT_FILE"; then
+              # Copy script for Surge and Loon
+              cp "$INPUT_FILE" "${OUTPUT_SURGE%.sgmodule}.js"
+              cp "$INPUT_FILE" "${OUTPUT_LOON%.plugin}.js"
+              
+              # Add Script sections
+              echo "[Script]" >> "$OUTPUT_SURGE"
+              echo "${FILENAME} = type=http-response,pattern=^https?://example\.com/,requires-body=1,max-size=0,script-path=${FILENAME}.js" >> "$OUTPUT_SURGE"
+              echo "" >> "$OUTPUT_SURGE"
+              
+              echo "[Script]" >> "$OUTPUT_LOON"
+              echo "http-response ^https?://example\.com/ script-path=${FILENAME}.js,requires-body=true,tag=${FILENAME}" >> "$OUTPUT_LOON"
+              echo "" >> "$OUTPUT_LOON"
+              
+              # Add a note about needing to set the correct URL pattern
+              echo "/* Note: URL pattern is set to example.com - please update with the correct pattern */" >> "$OUTPUT_SURGE"
+              echo "/* Note: URL pattern is set to example.com - please update with the correct pattern */" >> "$OUTPUT_LOON"
+            else
+              # Handle as a general purpose script
+              cp "$INPUT_FILE" "${OUTPUT_SURGE%.sgmodule}.js"
+              cp "$INPUT_FILE" "${OUTPUT_LOON%.plugin}.js"
+              
+              # Convert APIs
+              sed -i 's/\$task\.fetch/\$httpClient.get/g; s/\$prefs\.valueForKey/\$persistentStore.read/g' "${OUTPUT_SURGE%.sgmodule}.js"
+              sed -i 's/\$task\.fetch/\$http.get/g; s/\$prefs\.valueForKey/\$persistentStore.read/g' "${OUTPUT_LOON%.plugin}.js"
+              
+              # Add Script sections
+              echo "[Script]" >> "$OUTPUT_SURGE"
+              echo "${FILENAME} = type=cron,cronexp=0 0 * * *,wake-system=1,timeout=60,script-path=${FILENAME}.js" >> "$OUTPUT_SURGE"
+              echo "" >> "$OUTPUT_SURGE"
+              
+              echo "[Script]" >> "$OUTPUT_LOON"
+              echo "cron \"${FILENAME}\" script-path=${FILENAME}.js,tag=${FILENAME},cronexp=0 0 * * *" >> "$OUTPUT_LOON"
+              echo "" >> "$OUTPUT_LOON"
+            fi
+          fi
+          
+          # Always include the original rewrite configuration as a comment
+          echo "/* Original QuantumultX Configuration" >> "$OUTPUT_SURGE"
+          grep -E "\[(rewrite|mitm|filter).*\]" -A 50 "$INPUT_FILE" | grep -v "^$" | head -n 20 >> "$OUTPUT_SURGE"
+          echo "*/" >> "$OUTPUT_SURGE"
+          
+          echo "/* Original QuantumultX Configuration" >> "$OUTPUT_LOON"
+          grep -E "\[(rewrite|mitm|filter).*\]" -A 50 "$INPUT_FILE" | grep -v "^$" | head -n 20 >> "$OUTPUT_LOON"
+          echo "*/" >> "$OUTPUT_LOON"
+          EOF
+          
+          chmod +x qx-convert-fixed.sh
+      
+      - name: Convert scripts
+        run: |
+          for file in QuantumultX/*.js; do
+            filename=$(basename "$file" .js)
+            echo "Converting $filename..."
+            ./qx-convert-fixed.sh "$file" "Surge/${filename}.sgmodule" "Loon/${filename}.plugin"
+          done
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add Surge/ Loon/
+          git diff-index --quiet HEAD || git commit -m "Auto convert scripts"
+          
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}
+          git push
