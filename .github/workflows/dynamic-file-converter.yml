@@ -45,11 +45,12 @@ jobs:
           FILENAME="${{ github.event.inputs.filename }}"
           echo "Looking for files matching: *${FILENAME}*"
           
-          FILE_PATH=$(find . -type f -name "*${FILENAME}*" | sort -r | head -1)
+          # Exclude Surge/ and Loon/ directories to avoid processing output files
+          FILE_PATH=$(find . -type f -not -path "./Surge/*" -not -path "./Loon/*" -name "*${FILENAME}*" | sort -r | head -1)
           
           if [ -z "$FILE_PATH" ]; then
             echo "No exact match found, trying case-insensitive search..."
-            FILE_PATH=$(find . -iname "*${FILENAME}*" -type f | sort -r | head -1)
+            FILE_PATH=$(find . -type f -not -path "./Surge/*" -not -path "./Loon/*" -iname "*${FILENAME}*" | sort -r | head -1)
           fi
           
           if [ -z "$FILE_PATH" ]; then
@@ -69,7 +70,7 @@ jobs:
           FILE_TYPE="${{ github.event.inputs.file_type }}"
           echo "Processing file: $FILE_PATH with basename: $FILENAME (Type: $FILE_TYPE)"
           
-          # Node.js script for dynamic analysis
+          # Node.js script with corrected output
           cat > analyze.js << 'EOF'
           const fs = require('fs');
           const path = require('path');
@@ -94,9 +95,9 @@ jobs:
           let hostnames = new Set();
           let fileType = fileTypeInput;
 
-          // Auto-detect file type if not specified
+          // Auto-detect file type
           if (fileType === 'auto') {
-            if (content.match(/script-(response|request)-body/) || content.match(/\.js$/)) {
+            if (content.match(/script-(response|request)-body/) || filePath.match(/\.js$/)) {
               fileType = 'script';
             } else if (content.match(/^(#|\/\/)/) || content.match(/url\s+(reject|script-response-body)/)) {
               fileType = 'rule';
@@ -104,7 +105,7 @@ jobs:
               fileType = 'config';
             }
           }
-          console.log(`Detected file type: ${fileType}`);
+          console.error(`Detected file type: ${fileType}`);
 
           // Helper function to add hostname
           const addHostname = (line) => {
@@ -127,7 +128,7 @@ jobs:
               if (line.match(/电报频道|channel|telegram/i)) metadata.channel = line.replace(/.*(电报频道|channel|telegram)[:：=\s]*(.*)/i, '$2') || metadata.channel;
               addHostname(line);
             } 
-            // Metadata from key-value pairs (for scripts/configs)
+            // Metadata from key-value pairs
             else if (line.match(/^\w+\s*=/)) {
               const [key, value] = line.split(/\s*=\s*/).map(s => s.trim().replace(/^["']|["']$/g, ''));
               if (['name', 'desc', 'author', 'category', 'update', 'channel', 'hostname'].includes(key.toLowerCase())) {
@@ -149,20 +150,24 @@ jobs:
             });
           }
 
-          // Output metadata and results
-          console.log(`NAME=${metadata.name}`);
-          console.log(`DESC=${metadata.desc}`);
-          console.log(`AUTHOR=${metadata.author}`);
-          console.log(`CATEGORY=${metadata.category}`);
-          console.log(`UPDATE=${metadata.update}`);
-          console.log(`CHANNEL=${metadata.channel}`);
-          console.log(`HOSTNAMES=${Array.from(hostnames).join(', ')}`);
-          console.log(`RULES=${rules.join('\n')}`);
-          console.log(`FILE_TYPE=${fileType}`);
+          // Output shell-compatible variables
+          process.stdout.write(`NAME=${metadata.name}\n`);
+          process.stdout.write(`DESC=${metadata.desc}\n`);
+          process.stdout.write(`AUTHOR=${metadata.author}\n`);
+          process.stdout.write(`CATEGORY=${metadata.category}\n`);
+          process.stdout.write(`UPDATE=${metadata.update}\n`);
+          process.stdout.write(`CHANNEL=${metadata.channel}\n`);
+          process.stdout.write(`HOSTNAMES=${Array.from(hostnames).join(', ')}\n`);
+          process.stdout.write(`RULES=${rules.join('\n')}\n`);
+          process.stdout.write(`FILE_TYPE=${fileType}\n`);
           EOF
           
-          # Run analysis
+          # Run analysis and capture output
           node analyze.js "$FILE_PATH" "$FILE_TYPE" > extracted_data.txt
+          
+          # Debug extracted data
+          echo "Contents of extracted_data.txt:"
+          cat extracted_data.txt
           
           # Source extracted data
           . ./extracted_data.txt
