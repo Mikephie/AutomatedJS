@@ -1,0 +1,7 @@
+#!name = *.m.taobao.com
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[MITM]
+hostname = %APPEND% *.m.taobao.com
