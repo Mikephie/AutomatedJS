@@ -65,11 +65,11 @@ jobs:
       - name: Analyze and process file with Node.js
         run: |
           FILE_PATH="${{ steps.find_file.outputs.file_path }}"
-          FILENAME=$(basename "$FILE_PATH" | sed 's/\.[^.]*$//') # Remove extension
+          FILENAME=$(basename "$FILE_PATH" | sed 's/\.[^.]*$//')
           FILE_TYPE="${{ github.event.inputs.file_type }}"
           echo "Processing file: $FILE_PATH with basename: $FILENAME (Type: $FILE_TYPE)"
           
-          # Node.js script with all values quoted
+          # Node.js script
           cat > analyze.js << 'EOF'
           const fs = require('fs');
           const path = require('path');
@@ -80,7 +80,6 @@ jobs:
           const content = fs.readFileSync(filePath, 'utf8');
           const lines = content.split('\n').map(line => line.trim());
 
-          // Default metadata
           let metadata = {
             name: filename,
             desc: 'Dynamic Module',
@@ -94,7 +93,6 @@ jobs:
           let hostnames = new Set();
           let fileType = fileTypeInput;
 
-          // Auto-detect file type
           if (fileType === 'auto') {
             if (content.match(/script-(response|request)-body/) || (filePath.match(/\.js$/) && !content.match(/url\s+(reject|script-response-body)/))) {
               fileType = 'script';
@@ -106,7 +104,6 @@ jobs:
           }
           console.error(`Detected file type: ${fileType}`);
 
-          // Helper function to add hostname
           const addHostname = (line) => {
             const hostnameMatch = line.match(/(?:hostname\s*=|hostname\s*=)\s*([^#]+)/i);
             if (hostnameMatch) {
@@ -114,11 +111,8 @@ jobs:
             }
           };
 
-          // Parse file
           for (let line of lines) {
             if (!line) continue;
-
-            // Metadata from comments
             if (line.match(/^(#|\/\/)/)) {
               if (line.match(/项目功能|功能|name/i)) metadata.name = line.replace(/.*(项目功能|功能|name)[:：=\s]*(.*)/i, '$2') || metadata.name;
               if (line.match(/使用声明|desc|description/i)) metadata.desc = line.replace(/.*(使用声明|desc|description)[:：=\s]*(.*)/i, '$2') || metadata.desc;
@@ -126,22 +120,17 @@ jobs:
               if (line.match(/更新日期|update|date/i)) metadata.update = line.replace(/.*(更新日期|update|date)[:：=\s]*(.*)/i, '$2') || metadata.update;
               if (line.match(/电报频道|channel|telegram/i)) metadata.channel = line.replace(/.*(电报频道|channel|telegram)[:：=\s]*(.*)/i, '$2') || metadata.channel;
               addHostname(line);
-            } 
-            // Metadata from key-value pairs
-            else if (line.match(/^\w+\s*=/)) {
+            } else if (line.match(/^\w+\s*=/)) {
               const [key, value] = line.split(/\s*=\s*/).map(s => s.trim().replace(/^["']|["']$/g, ''));
               if (['name', 'desc', 'author', 'category', 'update', 'channel', 'hostname'].includes(key.toLowerCase())) {
                 metadata[key.toLowerCase()] = value;
               }
               addHostname(line);
-            }
-            // Collect rules (only for rule files)
-            else if (fileType === 'rule' && line.match(/^(http|\^https?:\/\/).*(url\s+(reject|script-response-body))/)) {
+            } else if (fileType === 'rule' && line.match(/^(http|\^https?:\/\/).*(url\s+(reject|script-response-body))/)) {
               rules.push(line);
             }
           }
 
-          // Fallback hostname from rules or JS content if none found
           if (hostnames.size === 0) {
             if (fileType === 'rule' && rules.length > 0) {
               rules.forEach(rule => {
@@ -154,7 +143,6 @@ jobs:
             }
           }
 
-          // Output shell-compatible variables with all values quoted
           process.stdout.write(`NAME="${metadata.name}"\n`);
           process.stdout.write(`DESC="${metadata.desc}"\n`);
           process.stdout.write(`AUTHOR="${metadata.author}"\n`);
@@ -166,19 +154,19 @@ jobs:
           process.stdout.write(`FILE_TYPE="${fileType}"\n`);
           EOF
           
-          # Run analysis and capture output
+          # Run analysis
           node analyze.js "$FILE_PATH" "$FILE_TYPE" > extracted_data.txt
           
-          # Debug extracted data
+          # Debug output
           echo "Contents of extracted_data.txt:"
           cat extracted_data.txt
           
-          # Source extracted data
+          # Source variables
           . ./extracted_data.txt
           
           # Create Surge module
           if [ "$FILE_TYPE" = "rule" ]; then
-            cat > "Surge/${FILENAME}.sgmodule" << 'EOF'
+            cat > "Surge/${FILENAME}.sgmodule" << 'SURGE_EOF'
 #!name = ${NAME}
 #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
 #!author = ${AUTHOR}
@@ -188,9 +176,9 @@ ${RULES}
 
 [MITM]
 hostname = %APPEND% ${HOSTNAMES}
-EOF
+SURGE_EOF
           else
-            cat > "Surge/${FILENAME}.sgmodule" << 'EOF'
+            cat > "Surge/${FILENAME}.sgmodule" << 'SURGE_EOF'
 #!name = ${NAME}
 #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
 #!author = ${AUTHOR}
@@ -201,12 +189,12 @@ ${FILENAME} = type=http-response, pattern=^https?://${HOSTNAMES}/, script-path=h
 
 [MITM]
 hostname = %APPEND% ${HOSTNAMES}
-EOF
+SURGE_EOF
           fi
           
           # Create Loon plugin
           if [ "$FILE_TYPE" = "rule" ]; then
-            cat > "Loon/${FILENAME}.plugin" << 'EOF'
+            cat > "Loon/${FILENAME}.plugin" << 'LOON_EOF'
 #!name = ${NAME}
 #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
 #!author = ${AUTHOR}
@@ -216,9 +204,9 @@ ${RULES}
 
 [MITM]
 hostname = ${HOSTNAMES}
-EOF
+LOON_EOF
           else
-            cat > "Loon/${FILENAME}.plugin" << 'EOF'
+            cat > "Loon/${FILENAME}.plugin" << 'LOON_EOF'
 #!name = ${NAME}
 #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
 #!author = ${AUTHOR}
@@ -229,7 +217,7 @@ http-response ^https?://${HOSTNAMES}/ script-path=https://raw.githubusercontent.
 
 [MITM]
 hostname = ${HOSTNAMES}
-EOF
+LOON_EOF
           fi
           
           echo "Created Surge module: Surge/${FILENAME}.sgmodule"
