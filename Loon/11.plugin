@@ -4,7 +4,7 @@
 #!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 #!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/axs.png
 
-[Rewrite]
+[URL Rewrite]
 ^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace reject
 ^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight reject
 
