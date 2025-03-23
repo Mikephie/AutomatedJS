@@ -1,0 +1,12 @@
+{
+  "name": "scripthub-converter",
+  "version": "1.0.0",
+  "description": "Convert QuantumultX scripts to Surge and Loon",
+  "main": "convert.js",
+  "scripts": {
+    "convert": "node convert.js"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0"
+  }
+}
