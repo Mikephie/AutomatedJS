@@ -68,12 +68,12 @@ async function convertScripts() {
         }
       });
 
-      // Surge .sgmodule format with metadata as comments
-      const surgeHeader = `// Name: ${metadata.name}\n` +
-                          (metadata.desc ? `// Desc: ${metadata.desc}\n` : '') +
-                          (metadata.author ? `// Author: ${metadata.author}\n` : '') +
-                          (metadata.icon ? `// Icon: ${metadata.icon}\n` : '') +
-                          (metadata.category ? `// Category: ${metadata.category}\n` : '');
+      // Surge .sgmodule format with #! metadata
+      const surgeHeader = `#!name=${metadata.name}\n` +
+                          (metadata.desc ? `#!desc=${metadata.desc}\n` : '') +
+                          (metadata.author ? `#!author=${metadata.author}\n` : '') +
+                          (metadata.icon ? `#!icon=${metadata.icon}\n` : '') +
+                          (metadata.category ? `#!category=${metadata.category}\n` : '');
       const surgeModule = `${surgeHeader}\n${ruleSection}${scriptSection}${mitmSection}`.trim();
       const surgeOutput = path.join(surgeDir, `${baseName}.sgmodule`);
       await fs.writeFile(surgeOutput, surgeModule);
