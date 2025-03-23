@@ -1,4 +1,4 @@
-// Name: ad
+#!name=ad
 
 ad = type=http-response, pattern=^https?:\/\/api\..*\.jd\.com\/(client\.action\?functionId=lite_advertising|.+\/service\/getLoadingLinks), script-path=https://raw.githubusercontent.com/chxm1023/Advertising/main/jhad.js, requires-body=true, max-size=-1, timeout=60
 ad = type=http-response, pattern=^https?:\/\/(api|api\.next)\.bspapp\.com\/client$, script-path=https://raw.githubusercontent.com/chxm1023/Advertising/main/quting.js, requires-body=true, max-size=-1, timeout=60

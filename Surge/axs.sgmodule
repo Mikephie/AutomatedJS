@@ -1,8 +1,8 @@
-// Name: axs
-// Desc: 去弹窗+主页广告
-// Author: 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
-// Icon: https://raw.githubusercontent.com/Mikephie/icons/main/icon/axs.png
-// Category: 🚫广告
+#!name=axs
+#!desc=去弹窗+主页广告
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/axs.png
+#!category=🚫广告
 
 [Rule]
 URL-REGEX,"^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace",REJECT
