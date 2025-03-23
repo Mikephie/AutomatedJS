@@ -29,18 +29,18 @@ jobs:
         run: |
           mkdir -p Surge Loon
       
-      - name: Find file with fuzzy matching
+      - name: Find file with enhanced fuzzy matching
         id: find_file
         run: |
           FILENAME="${{ github.event.inputs.filename }}"
           echo "Looking for files matching: *${FILENAME}*.js"
           
-          # Search with find command
-          FILE_PATH=$(find . -name "*${FILENAME}*.js" -type f | head -1)
+          # Search with find and rank by relevance (shortest path first)
+          FILE_PATH=$(find . -name "*${FILENAME}*.js" -type f | sort -r | head -1)
           
           if [ -z "$FILE_PATH" ]; then
             echo "No exact match found, trying case-insensitive search..."
-            FILE_PATH=$(find . -iname "*${FILENAME}*.js" -type f | head -1)
+            FILE_PATH=$(find . -iname "*${FILENAME}*.js" -type f | sort -r | head -1)
           fi
           
           if [ -z "$FILE_PATH" ]; then
@@ -53,96 +53,100 @@ jobs:
           echo "Found file: $FILE_PATH"
           echo "file_path=$FILE_PATH" >> $GITHUB_OUTPUT
       
-      - name: Process for Surge
+      - name: Process script with Node.js for metadata and pattern extraction
         run: |
           FILE_PATH="${{ steps.find_file.outputs.file_path }}"
           FILENAME=$(basename "$FILE_PATH" .js)
           echo "Processing file: $FILE_PATH with basename: $FILENAME"
           
-          # Extract basic metadata and hostname
-          NAME=$(grep -o 'name\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/name\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "${FILENAME}")
-          DESC=$(grep -o 'desc\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/desc\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "模块")
-          CATEGORY=$(grep -o 'category\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/category\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "🔐APP")
-          AUTHOR=$(grep -o 'author\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/author\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ")
-          HOSTNAME=$(grep -o 'hostname\s*=\s*[^"]*' "$FILE_PATH" | head -1 | sed 's/hostname\s*=\s*//' || echo "example.com")
+          # Use Node.js for robust parsing
+          cat > extract.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          const filePath = process.argv[2];
+          const filename = path.basename(filePath, '.js');
+          const content = fs.readFileSync(filePath, 'utf8');
+
+          // Default values
+          let metadata = {
+            name: filename,
+            desc: '模块',
+            category: '🔐APP',
+            author: '🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ',
+            hostname: 'example.com',
+            icon: `https://raw.githubusercontent.com/Mikephie/icons/main/icon/${filename}.png`
+          };
+          let urlPattern = '^https?://example.com/';
+
+          // Robust metadata extraction
+          const lines = content.split('\n');
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('//') || trimmed.startsWith('#')) continue; // Skip comments
+            
+            const match = trimmed.match(/(\w+)\s*=\s*["']?([^"',\n]+)["']?,?/);
+            if (match) {
+              const key = match[1].toLowerCase();
+              const value = match[2];
+              if (['name', 'desc', 'category', 'author', 'hostname', 'icon'].includes(key)) {
+                metadata[key] = value;
+              }
+            }
+            // Extract URL pattern from rewrite_local or similar sections
+            if (trimmed.includes('script-response-body') || trimmed.includes('http-response')) {
+              const patternMatch = trimmed.match(/^\s*([^\s]+)\s+.*script-(response|request)-body/);
+              if (patternMatch) urlPattern = patternMatch[1];
+            }
+          }
+
+          // Output results
+          console.log(`NAME=${metadata.name}`);
+          console.log(`DESC=${metadata.desc}`);
+          console.log(`CATEGORY=${metadata.category}`);
+          console.log(`AUTHOR=${metadata.author}`);
+          console.log(`HOSTNAME=${metadata.hostname}`);
+          console.log(`ICON=${metadata.icon}`);
+          console.log(`URL_PATTERN=${urlPattern}`);
+          EOF
           
-          echo "Creating Surge module with basic metadata..."
+          # Run the extraction script
+          node extract.js "$FILE_PATH" > extracted_metadata.txt
           
-          # Create basic Surge module
+          # Source the extracted metadata
+          . ./extracted_metadata.txt
+          
+          # Create Surge module
           cat > "Surge/${FILENAME}.sgmodule" << EOF
           #!name = ${NAME}
-          #!desc=${DESC}
-          #!category=${CATEGORY}
-          #!author=${AUTHOR}
+          #!desc = ${DESC}
+          #!category = ${CATEGORY}
+          #!author = ${AUTHOR}
           
           [Script]
-          ${FILENAME} = type=http-response, pattern=^https?://example.com/, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${FILENAME}.js, requires-body=true, max-size=-1, timeout=60
+          ${FILENAME} = type=http-response, pattern=${URL_PATTERN}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${FILENAME}.js, requires-body=true, max-size=-1, timeout=60
           
           [MITM]
           hostname = %APPEND% ${HOSTNAME}
           EOF
           
-          echo "Successfully created Surge module: Surge/${FILENAME}.sgmodule"
-          
-      - name: Process for Loon
-        run: |
-          FILE_PATH="${{ steps.find_file.outputs.file_path }}"
-          FILENAME=$(basename "$FILE_PATH" .js)
-          echo "Processing file: $FILE_PATH with basename: $FILENAME"
-          
-          # Extract basic metadata and hostname
-          NAME=$(grep -o 'name\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/name\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "${FILENAME}")
-          DESC=$(grep -o 'desc\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/desc\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "插件")
-          CATEGORY=$(grep -o 'category\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/category\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "🔐APP")
-          AUTHOR=$(grep -o 'author\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/author\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ")
-          ICON=$(grep -o 'icon\s*=\s*["\x27]*[^"\x27,]*["\x27,]*' "$FILE_PATH" | head -1 | sed 's/icon\s*=\s*["\x27]*\([^"\x27,]*\)["\x27,]*/\1/' || echo "https://raw.githubusercontent.com/Mikephie/icons/main/icon/${FILENAME}.png")
-          HOSTNAME=$(grep -o 'hostname\s*=\s*[^"]*' "$FILE_PATH" | head -1 | sed 's/hostname\s*=\s*//' || echo "example.com")
-          
-          echo "Creating Loon plugin with basic metadata..."
-          
-          # Create basic Loon plugin
+          # Create Loon plugin
           cat > "Loon/${FILENAME}.plugin" << EOF
           #!name = ${NAME}
-          #!desc=${DESC}
-          #!icon=${ICON}
-          #!author=${AUTHOR}
-          #!category=${CATEGORY}
+          #!desc = ${DESC}
+          #!icon = ${ICON}
+          #!author = ${AUTHOR}
+          #!category = ${CATEGORY}
           
           [Script]
-          http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${FILENAME}.js, requires-body=true, timeout=60, tag=${FILENAME}
+          http-response ${URL_PATTERN} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/${FILENAME}.js, requires-body=true, timeout=60, tag=${FILENAME}
           
           [MITM]
           hostname = ${HOSTNAME}
           EOF
           
+          echo "Successfully created Surge module: Surge/${FILENAME}.sgmodule"
           echo "Successfully created Loon plugin: Loon/${FILENAME}.plugin"
-      
-      - name: Extract URL pattern from script
-        run: |
-          FILE_PATH="${{ steps.find_file.outputs.file_path }}"
-          FILENAME=$(basename "$FILE_PATH" .js)
-          echo "Attempting to extract URL pattern..."
-          
-          # Try to extract URL pattern from rewrite_local section
-          if grep -q "\[rewrite_local\]" "$FILE_PATH"; then
-            URL_PATTERN=$(grep -A 50 "\[rewrite_local\]" "$FILE_PATH" | grep "script-response-body" | head -1 | awk '{print $1}')
-            
-            if [ ! -z "$URL_PATTERN" ]; then
-              echo "Found URL pattern: $URL_PATTERN"
-              
-              # Update Surge module
-              sed -i "s|pattern=\^https?://example\.com/|pattern=${URL_PATTERN}|" "Surge/${FILENAME}.sgmodule"
-              
-              # Update Loon plugin
-              sed -i "s|http-response \^https?://example\.com/|http-response ${URL_PATTERN}|" "Loon/${FILENAME}.plugin"
-              
-              echo "Updated pattern in both files"
-            else
-              echo "No URL pattern found in rewrite_local section"
-            fi
-          else
-            echo "No rewrite_local section found"
-          fi
       
       - name: Commit and push changes
         run: |
