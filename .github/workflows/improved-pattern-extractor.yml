@@ -103,18 +103,20 @@ jobs:
           #!desc = 媒体制作 - 插件
           #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
           #!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/{info['filename']}.png
-          
+
+         # Add reject rules if any
+              if info['reject_rules']:
+                  template += "\n\n[Rewrite]"
+                  for rule in info['reject_rules']:
+                      template += f"\n{rule} reject"
+
+              
           [Script]
           http-response {info['url_pattern']} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['script_path']}, requires-body=true, timeout=60, tag={info['filename']}"""
               
               # Add MITM section
               template += f"\n\n[MITM]\nhostname = {info['hostname']}"
               
-              # Add reject rules if any
-              if info['reject_rules']:
-                  template += "\n\n[Rewrite]"
-                  for rule in info['reject_rules']:
-                      template += f"\n{rule} reject"
               
               return template
           
@@ -123,18 +125,20 @@ jobs:
           #!desc = 媒体制作 - 模块
           #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
           #!category=🔐APP
-          
+
+          # Add reject rules if any
+              if info['reject_rules']:
+                  template += "\n\n[URL Rewrite]"
+                  for rule in info['reject_rules']:
+                      template += f"\n{rule} - reject"
+
+              
           [Script]
           {info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['script_path']}, requires-body=true, max-size=-1, timeout=60"""
               
               # Add MITM section
               template += f"\n\n[MITM]\nhostname = %APPEND% {info['hostname']}"
               
-              # Add reject rules if any
-              if info['reject_rules']:
-                  template += "\n\n[URL Rewrite]"
-                  for rule in info['reject_rules']:
-                      template += f"\n{rule} - reject"
               
               return template
           
