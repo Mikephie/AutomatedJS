@@ -69,8 +69,8 @@ jobs:
           FILE_TYPE="${{ github.event.inputs.file_type }}"
           echo "Processing file: $FILE_PATH with basename: $FILENAME (Type: $FILE_TYPE)"
           
-          # Node.js script
-          cat > analyze.js << 'EOF'
+          # Node.js script with explicit EOF
+          cat > analyze.js << 'ANALYSIS_EOF'
           const fs = require('fs');
           const path = require('path');
 
@@ -152,7 +152,7 @@ jobs:
           process.stdout.write(`HOSTNAMES="${Array.from(hostnames).join(', ')}"\n`);
           process.stdout.write(`RULES="${rules.join('\n')}"\n`);
           process.stdout.write(`FILE_TYPE="${fileType}"\n`);
-          EOF
+ANALYSIS_EOF
           
           # Run analysis
           node analyze.js "$FILE_PATH" "$FILE_TYPE" > extracted_data.txt
