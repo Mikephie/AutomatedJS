@@ -1,0 +1,172 @@
+name: Dynamic Pattern Extractor
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract-and-convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Create directories
+        run: mkdir -p Surge Loon
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Create Python extractor script
+        run: |
+          cat > extract.py << 'EOF'
+          import os
+          import re
+          import sys
+          
+          def extract_info(file_path):
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as file:
+                      content = file.read()
+                  
+                  # Get filename without extension
+                  filename = os.path.basename(file_path).replace('.js', '')
+                  
+                  # Extract script name (line after 📜)
+                  script_name = filename
+                  name_match = re.search(r'📜\s*(.*?)[\n\r]', content, re.DOTALL)
+                  if name_match:
+                      script_name = name_match.group(1).strip()
+                  
+                  # Extract URL pattern for script-response-body
+                  url_pattern = "^https?://example.com/"
+                  response_patterns = re.findall(r'^([^\s]+)\s+url\s+script-response-body', content, re.MULTILINE)
+                  if response_patterns:
+                      url_pattern = response_patterns[0].strip()
+                  
+                  # Extract hostname
+                  hostname = "example.com"
+                  hostname_match = re.search(r'hostname\s*=\s*(.*?)[\n\r]', content)
+                  if hostname_match:
+                      hostname = hostname_match.group(1).strip()
+                  
+                  # Extract reject rules
+                  reject_rules = []
+                  for line in content.split('\n'):
+                      if 'reject' in line and 'url' in line and not 'script' in line:
+                          parts = line.strip().split()
+                          if len(parts) >= 3 and parts[0] and parts[1] == 'url' and 'reject' in parts[2]:
+                              reject_rules.append(parts[0])
+                  
+                  return {
+                      'filename': filename,
+                      'script_name': script_name,
+                      'url_pattern': url_pattern,
+                      'hostname': hostname,
+                      'reject_rules': reject_rules
+                  }
+              except Exception as e:
+                  print(f"Error processing {file_path}: {str(e)}", file=sys.stderr)
+                  return {
+                      'filename': os.path.basename(file_path).replace('.js', ''),
+                      'script_name': os.path.basename(file_path).replace('.js', ''),
+                      'url_pattern': "^https?://example.com/",
+                      'hostname': "example.com",
+                      'reject_rules': []
+                  }
+          
+          def create_loon_template(info):
+              template = f"""#!name = {info['script_name']}🔐APP解锁
+          #!desc = 媒体制作 - 插件
+          #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+          #!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/{info['filename']}.png
+          
+          [Script]
+          http-response {info['url_pattern']} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['filename']}.js, requires-body=true, timeout=60, tag={info['filename']}
+          
+          [MITM]
+          hostname = {info['hostname']}"""
+              
+              # Add reject rules if any
+              if info['reject_rules']:
+                  template += "\n\n[Rewrite]"
+                  for rule in info['reject_rules']:
+                      template += f"\n{rule} reject"
+              
+              return template
+          
+          def create_surge_template(info):
+              template = f"""#!name = {info['script_name']}🔐APP
+          #!desc = 媒体制作 - 模块
+          #!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+          #!category=🔐APP
+          
+          [Script]
+          {info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['filename']}.js, requires-body=true, max-size=-1, timeout=60
+          
+          [MITM]
+          hostname = %APPEND% {info['hostname']}"""
+              
+              # Add reject rules if any
+              if info['reject_rules']:
+                  template += "\n\n[URL Rewrite]"
+                  for rule in info['reject_rules']:
+                      template += f"\n{rule} - reject"
+              
+              return template
+          
+          def main():
+              if len(sys.argv) < 2:
+                  print("Usage: python extract.py <qx_script_file>")
+                  sys.exit(1)
+              
+              file_path = sys.argv[1]
+              info = extract_info(file_path)
+              
+              # Print info for debugging
+              print(f"Extracted info for {info['filename']}:")
+              print(f"  Script name: {info['script_name']}")
+              print(f"  URL pattern: {info['url_pattern']}")
+              print(f"  Hostname: {info['hostname']}")
+              print(f"  Reject rules: {', '.join(info['reject_rules']) if info['reject_rules'] else 'None'}")
+              
+              # Create templates
+              loon_content = create_loon_template(info)
+              surge_content = create_surge_template(info)
+              
+              # Write to files
+              loon_path = f"Loon/{info['filename']}.plugin"
+              surge_path = f"Surge/{info['filename']}.sgmodule"
+              
+              with open(loon_path, 'w', encoding='utf-8') as file:
+                  file.write(loon_content)
+              
+              with open(surge_path, 'w', encoding='utf-8') as file:
+                  file.write(surge_content)
+              
+              print(f"Created templates: {loon_path} and {surge_path}")
+          
+          if __name__ == "__main__":
+              main()
+          EOF
+      
+      - name: Process scripts
+        run: |
+          # Process each file with Python script
+          for file in QuantumultX/*.js; do
+            echo "Processing $file..."
+            python extract.py "$file"
+          done
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Surge/ Loon/
+          git commit -m "Add extracted templates with dynamic patterns" || echo "No changes to commit"
+          git push || echo "Nothing to push"
