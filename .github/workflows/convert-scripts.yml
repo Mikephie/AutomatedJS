@@ -36,7 +36,7 @@ jobs:
           const path = require('path');
 
           function convertToSurge(content) {
-            let newContent = content;
+            let newContent = '';
             
             // Extract metadata from QuantumultX script
             let name = 'Converted Script';
@@ -46,18 +46,71 @@ jobs:
             const descMatch = content.match(/[\s\S]*?desc\s*=\s*(.+?)[\n\r]/i);
             
             if (nameMatch && nameMatch[1]) {
-              name = nameMatch[1].trim();
+              name = nameMatch[1].trim().replace(/['"]/g, '');
             }
             
             if (descMatch && descMatch[1]) {
-              desc = descMatch[1].trim();
+              desc = descMatch[1].trim().replace(/['"]/g, '');
             }
             
-            // Add Surge-specific headers
-            newContent = `#!name=${name}\n#!desc=${desc}\n\n` + newContent;
+            // Create Surge module header
+            newContent += `#!name=${name}\n`;
+            newContent += `#!desc=${desc}\n\n`;
             
-            // Convert QuantumultX API calls to Surge equivalents
-            // $task.fetch() to $httpClient.get()/post()
+            // Determine script type from content
+            const isJSFile = (
+              content.includes('$task.fetch') || 
+              content.includes('$httpClient') ||
+              content.includes('$persistentStore')
+            );
+            
+            if (isJSFile) {
+              // This is likely a script file
+              const scriptName = name.replace(/\s+/g, '_').toLowerCase();
+              
+              // Add [Script] section
+              newContent += `[Script]\n`;
+              newContent += `${scriptName} = type=cron,cronexp=0 0 * * *,script-path=https://raw.githubusercontent.com/${process.env.GITHUB_REPOSITORY}/main/Surge/${path.basename(outputFile)}_script.js,timeout=60,wake-system=1\n\n`;
+              
+              // Save the actual script to a separate file
+              const scriptContent = convertSurgeScriptContent(content);
+              const scriptFilePath = path.join(path.dirname(outputFile), `${path.basename(outputFile, '.sgmodule')}_script.js`);
+              fs.writeFileSync(scriptFilePath, scriptContent);
+            } else {
+              // This might be a rewrite/redirect rule file
+              
+              // Try to identify sections from content
+              if (content.includes('hostname =') || content.includes('hostname=')) {
+                newContent += `[MITM]\n`;
+                const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
+                if (hostnameMatch && hostnameMatch[1]) {
+                  newContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
+                }
+              }
+              
+              if (content.includes('url-response-body') || content.includes('url-request-body')) {
+                newContent += `[Map Local]\n`;
+                // Convert URL rewrite rules (simplified)
+                const rewrites = content.match(/url\s+(?:reject|response-body|request-body).*(?:[\n\r]|$)/g);
+                if (rewrites) {
+                  rewrites.forEach(rule => {
+                    const surgRule = rule.replace(/^url\s+reject(-.*?)?/, 'data="https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/reject.txt"')
+                      .replace(/^url\s+response-body\s+(.*?)\s+(.*?)$/, 'data-type=text data="$2"');
+                    newContent += surgRule + '\n';
+                  });
+                }
+                newContent += '\n';
+              }
+            }
+            
+            return newContent;
+          }
+
+          function convertSurgeScriptContent(content) {
+            // Convert QuantumultX API to Surge equivalents
+            let newContent = content;
+            
+            // $task.fetch() to $httpClient
             newContent = newContent.replace(/\$task\.fetch\s*\(\s*(\{[\s\S]*?\})\s*\)/g, (match, options) => {
               if (options.includes('"method": "POST"') || options.includes('"method":"POST"')) {
                 return `$httpClient.post(${options}`;
@@ -69,7 +122,8 @@ jobs:
             // Convert the callback structure
             newContent = newContent.replace(/\.then\s*\(\s*response\s*=>\s*\{([\s\S]*?)\$done\s*\(\s*(\{[\s\S]*?\})\s*\)/g, 
               (match, innerCode, doneObj) => {
-                return `.then(function(response) {${innerCode}$done(${doneObj})`;
+                return `, function(error, response, data) {
+                  if (error) return $done();${innerCode}$done(${doneObj})`;
               }
             );
             
@@ -95,7 +149,7 @@ jobs:
           }
 
           function convertToLoon(content) {
-            let newContent = content;
+            let newContent = '';
             
             // Extract metadata from QuantumultX script
             let name = 'Converted Script';
@@ -105,18 +159,75 @@ jobs:
             const descMatch = content.match(/[\s\S]*?desc\s*=\s*(.+?)[\n\r]/i);
             
             if (nameMatch && nameMatch[1]) {
-              name = nameMatch[1].trim();
+              name = nameMatch[1].trim().replace(/['"]/g, '');
             }
             
             if (descMatch && descMatch[1]) {
-              desc = descMatch[1].trim();
+              desc = descMatch[1].trim().replace(/['"]/g, '');
             }
             
-            // Add Loon-specific headers
-            newContent = `#!name = ${name}\n#!desc = ${desc}\n#!openUrl = \n#!author = Converted\n#!homepage = \n#!icon = \n\n` + newContent;
+            // Create Loon plugin header
+            newContent += `#!name = ${name}\n`;
+            newContent += `#!desc = ${desc}\n`;
+            newContent += `#!author = Converted\n`;
+            newContent += `#!homepage = https://github.com/${process.env.GITHUB_REPOSITORY}\n`;
+            newContent += `#!icon = \n\n`;
             
-            // Convert QuantumultX API calls to Loon equivalents
-            // $task.fetch() to $http.get()/post()
+            // Determine script type from content
+            const isJSFile = (
+              content.includes('$task.fetch') || 
+              content.includes('$http') ||
+              content.includes('$storage')
+            );
+            
+            if (isJSFile) {
+              // This is likely a script file
+              const scriptName = name.replace(/\s+/g, '_').toLowerCase();
+              
+              // Add [Script] section
+              newContent += `[Script]\n`;
+              newContent += `cron "${scriptName}" script-path=https://raw.githubusercontent.com/${process.env.GITHUB_REPOSITORY}/main/Loon/${path.basename(outputFile)}_script.js,tag=${scriptName},cronexp=0 0 * * *\n\n`;
+              
+              // Save the actual script to a separate file
+              const scriptContent = convertLoonScriptContent(content);
+              const scriptFilePath = path.join(path.dirname(outputFile), `${path.basename(outputFile, '.plugin')}_script.js`);
+              fs.writeFileSync(scriptFilePath, scriptContent);
+            } else {
+              // This might be a rewrite/redirect rule file
+              
+              // Try to identify sections from content
+              if (content.includes('hostname =') || content.includes('hostname=')) {
+                newContent += `[MITM]\n`;
+                const hostnameMatch = content.match(/hostname\s*=\s*(.+?)(?:[\n\r]|$)/);
+                if (hostnameMatch && hostnameMatch[1]) {
+                  newContent += `hostname = ${hostnameMatch[1].trim()}\n\n`;
+                }
+              }
+              
+              if (content.includes('url ') || content.includes('host ')) {
+                newContent += `[Rewrite]\n`;
+                // Convert URL rewrite rules (simplified)
+                const rewrites = content.match(/(?:^|\n)(?:url|host)\s+.*(?:[\n\r]|$)/g);
+                if (rewrites) {
+                  rewrites.forEach(rule => {
+                    let loonRule = rule
+                      .replace(/^url\s+reject(-.*?)?/, '^https?:\/\/(.*) reject')
+                      .replace(/^url\s+response-body\s+(.*?)\s+(.*?)$/, '^https?:\/\/(.*) response-body $1 response-body $2');
+                    newContent += loonRule + '\n';
+                  });
+                }
+                newContent += '\n';
+              }
+            }
+            
+            return newContent;
+          }
+
+          function convertLoonScriptContent(content) {
+            // Convert QuantumultX API to Loon equivalents
+            let newContent = content;
+            
+            // $task.fetch() to $http
             newContent = newContent.replace(/\$task\.fetch\s*\(\s*(\{[\s\S]*?\})\s*\)/g, (match, options) => {
               if (options.includes('"method": "POST"') || options.includes('"method":"POST"')) {
                 return `$http.post(${options}`;
@@ -132,11 +243,11 @@ jobs:
               }
             );
             
-            // Convert $prefs to $persistentStore
+            // Convert $prefs to $storage
             newContent = newContent.replace(/\$prefs\.valueForKey\s*\(\s*["'](.*?)["']\s*\)/g, 
-              (match, key) => `$storage.read("${key}")`);
+              (match, key) => `$storage.getItem("${key}")`);
             newContent = newContent.replace(/\$prefs\.setValueForKey\s*\(\s*(.*?)\s*,\s*["'](.*?)["']\s*\)/g, 
-              (match, value, key) => `$storage.write(${value}, "${key}")`);
+              (match, value, key) => `$storage.setItem("${key}", ${value})`);
             
             // Convert $notify to $notification
             newContent = newContent.replace(/\$notify\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)(?:\s*,\s*(.*?))?\s*\)/g, 
@@ -212,17 +323,17 @@ jobs:
       - name: Convert QuantumultX scripts to Surge
         run: |
           for file in QuantumultX/*.js; do
-            filename=$(basename "$file")
+            filename=$(basename "$file" .js)
             echo "Converting $filename to Surge format..."
-            node tools/convert.js --input "$file" --output "Surge/${filename}" --target surge
+            node tools/convert.js --input "$file" --output "Surge/${filename}.sgmodule" --target surge
           done
       
       - name: Convert QuantumultX scripts to Loon
         run: |
           for file in QuantumultX/*.js; do
-            filename=$(basename "$file")
+            filename=$(basename "$file" .js)
             echo "Converting $filename to Loon format..."
-            node tools/convert.js --input "$file" --output "Loon/${filename}" --target loon
+            node tools/convert.js --input "$file" --output "Loon/${filename}.plugin" --target loon
           done
       
       - name: Commit and push changes
