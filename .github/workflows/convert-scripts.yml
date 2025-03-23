@@ -31,7 +31,7 @@ jobs:
       - name: Create simplified converter script
         run: |
           mkdir -p tools
-          cat > tools/direct-convert.js << 'EOF'
+          cat > tools/convert.js << 'EOF'
           const fs = require('fs');
           const path = require('path');
 
