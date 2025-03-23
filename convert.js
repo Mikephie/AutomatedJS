@@ -26,41 +26,31 @@ async function convertScripts() {
       console.log(`Processing ${file}:`);
       console.log(`Original content (first 100 chars): ${script.substring(0, 100)}...`);
 
-      // Conversion for Surge
-      let surgeScript = script
-        .replace(/\$httpClient\.get/g, '$http.get') // HTTP GET
-        .replace(/\$httpClient\.post/g, '$http.post') // HTTP POST
-        .replace(/\$persistentStore\.write/g, '$prefs.setValueForKey') // Persistent storage write
-        .replace(/\$persistentStore\.read/g, '$prefs.valueForKey')     // Persistent storage read
-        .replace(/\$notification\.post/g, '$notify')                  // Notification
-        .replace(/Quantumult ?X/gi, 'Surge');                         // Case-insensitive name replacement
-
-      // Conversion for Loon
-      let loonScript = script
-        .replace(/\$httpClient\.get/g, '$http.get') // HTTP GET
-        .replace(/\$httpClient\.post/g, '$http.post') // HTTP POST
-        .replace(/\$persistentStore\.write/g, '$config.set') // Persistent storage write
-        .replace(/\$persistentStore\.read/g, '$config.get')  // Persistent storage read
-        .replace(/\$notification\.post/g, '$notify')        // Notification
-        .replace(/Quantumult ?X/gi, 'Loon');                // Case-insensitive name replacement
-
-      // Check if any changes were made
-      const surgeChanged = surgeScript !== script;
-      const loonChanged = loonScript !== script;
-
-      console.log(`Surge conversion applied: ${surgeChanged}`);
-      console.log(`Loon conversion applied: ${loonChanged}`);
-
-      // Output file paths
+      // Base name without extension
       const baseName = path.basename(file, '.js');
-      const surgeOutput = path.join(surgeDir, `${baseName}.js`);
-      const loonOutput = path.join(loonDir, `${baseName}.js`);
 
-      // Write converted scripts
-      await fs.writeFile(surgeOutput, surgeScript);
-      await fs.writeFile(loonOutput, loonScript);
+      // Surge .sgmodule format
+      const surgeModule = `[Script]\n` +
+                          `${baseName} = type=http-request,pattern=^https?://example.com,script-path=${file},requires-body=true\n` +
+                          `\n[Module]\n` +
+                          `script = \n` +
+                          `${script}`;
+      const surgeOutput = path.join(surgeDir, `${baseName}.sgmodule`);
+      await fs.writeFile(surgeOutput, surgeModule);
+      console.log(`Generated ${baseName}.sgmodule for Surge`);
 
-      console.log(`Converted ${file} to Surge and Loon formats`);
+      // Loon .plugin format
+      const loonPlugin = `[Plugin]\n` +
+                         `Name = ${baseName}\n` +
+                         `Desc = Converted from QuantumultX\n` +
+                         `Author = xAI\n` +
+                         `Version = 1.0\n` +
+                         `URL = https://github.com/your-repo\n` +
+                         `\n[Script]\n` +
+                         `${script}`;
+      const loonOutput = path.join(loonDir, `${baseName}.plugin`);
+      await fs.writeFile(loonOutput, loonPlugin);
+      console.log(`Generated ${baseName}.plugin for Loon`);
     }
   }
 
