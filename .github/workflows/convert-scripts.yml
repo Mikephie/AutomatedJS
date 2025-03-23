@@ -24,11 +24,90 @@ jobs:
         with:
           node-version: '16'
       
-      - name: Clone Script Hub repository
+      - name: Create custom converter script
         run: |
-          git clone https://github.com/Script-Hub-Org/Script-Hub.git
-          cd Script-Hub
-          npm install
+          mkdir -p tools
+          cat > tools/convert.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          function convertToSurge(content) {
+            // Basic conversion rules from QuantumultX to Surge
+            let newContent = content;
+            
+            // Replace common headers
+            newContent = newContent.replace(/\/\*\s*QuantumultX\s*\*\//, '// #!name=Script Name\n// #!desc=Script Description');
+            
+            // Replace $task.fetch with $httpClient
+            newContent = newContent.replace(/\$task\.fetch/g, '$httpClient.get');
+            
+            // Replace $done({status, headers, body})
+            newContent = newContent.replace(/\$done\(\s*\{\s*status\s*:.*?body\s*:.*?\}\s*\)/g, 
+              (match) => {
+                return match.replace('$done({', '$done(').replace('})', ')');
+              }
+            );
+            
+            return newContent;
+          }
+
+          function convertToLoon(content) {
+            // Basic conversion rules from QuantumultX to Loon
+            let newContent = content;
+            
+            // Replace common headers
+            newContent = newContent.replace(/\/\*\s*QuantumultX\s*\*\//, 
+              '/**\n * @name Script Name\n * @desc Script Description\n * @version 1.0.0\n */');
+            
+            // Replace $task.fetch with $httpClient
+            newContent = newContent.replace(/\$task\.fetch/g, '$http.get');
+            
+            // Handle other conversions as needed
+            
+            return newContent;
+          }
+
+          // Main function
+          function main() {
+            const args = process.argv.slice(2);
+            const inputFile = args.find((arg, i) => arg === '--input' && args[i+1]).split('--input')[1]?.trim() || args[args.indexOf('--input') + 1];
+            const outputFile = args.find((arg, i) => arg === '--output' && args[i+1]).split('--output')[1]?.trim() || args[args.indexOf('--output') + 1];
+            const target = args.find((arg, i) => arg === '--target' && args[i+1]).split('--target')[1]?.trim() || args[args.indexOf('--target') + 1];
+            
+            if (!inputFile || !outputFile || !target) {
+              console.error('Usage: node convert.js --input <inputFile> --output <outputFile> --target <surge|loon>');
+              process.exit(1);
+            }
+            
+            try {
+              const content = fs.readFileSync(inputFile, 'utf8');
+              let convertedContent;
+              
+              if (target.toLowerCase() === 'surge') {
+                convertedContent = convertToSurge(content);
+              } else if (target.toLowerCase() === 'loon') {
+                convertedContent = convertToLoon(content);
+              } else {
+                console.error(`Unsupported target: ${target}. Use 'surge' or 'loon'.`);
+                process.exit(1);
+              }
+              
+              // Ensure directory exists
+              const dir = path.dirname(outputFile);
+              if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+              }
+              
+              fs.writeFileSync(outputFile, convertedContent);
+              console.log(`Successfully converted ${inputFile} to ${target} format at ${outputFile}`);
+            } catch (error) {
+              console.error(`Error: ${error.message}`);
+              process.exit(1);
+            }
+          }
+
+          main();
+          EOF
           
       - name: Create output directories
         run: |
@@ -40,7 +119,7 @@ jobs:
           for file in QuantumultX/*.js; do
             filename=$(basename "$file")
             echo "Converting $filename to Surge format..."
-            node Script-Hub/scripts/convert.js --input "$file" --output "Surge/${filename}" --target surge
+            node tools/convert.js --input "$file" --output "Surge/${filename}" --target surge
           done
       
       - name: Convert QuantumultX scripts to Loon
@@ -48,7 +127,7 @@ jobs:
           for file in QuantumultX/*.js; do
             filename=$(basename "$file")
             echo "Converting $filename to Loon format..."
-            node Script-Hub/scripts/convert.js --input "$file" --output "Loon/${filename}" --target loon
+            node tools/convert.js --input "$file" --output "Loon/${filename}" --target loon
           done
       
       - name: Commit and push changes
