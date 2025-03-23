@@ -30,9 +30,10 @@ async function convertScripts() {
 
       // Parse QuantumultX content
       const lines = content.split('\n').filter(line => line.trim());
-      let ruleSection = '';
-      let scriptSection = '';
-      let mitmSection = '';
+      let ruleSection = '';      // For [Rule] (filter_local)
+      let rewriteSection = '';   // For [URL Rewrite] (Surge) or [Rewrite] (Loon)
+      let scriptSection = '';    // For [Script]
+      let mitmSection = '';      // For [MITM]
       let metadata = {
         name: baseName,
         desc: '',
@@ -50,11 +51,18 @@ async function convertScripts() {
         
         // Parse sections
         else if (line.startsWith('[filter_local]')) ruleSection += '[Rule]\n';
-        else if (line.startsWith('[rewrite_local]')) scriptSection += '[Script]\n';
+        else if (line.startsWith('[rewrite_local]')) {
+          rewriteSection += '[URL Rewrite]\n'; // Surge default, adjusted for Loon later
+          scriptSection += '[Script]\n';
+        }
         else if (line.startsWith('[mitm]')) mitmSection += '[MITM]\n';
         else if (line.includes('url-regex') && line.includes('reject')) {
           const [, pattern] = line.match(/url-regex,(.*?),reject/) || [];
           if (pattern) ruleSection += `URL-REGEX,"${pattern}",REJECT\n`;
+        }
+        else if (line.includes(' - reject')) {
+          const [, pattern] = line.match(/(^.*?)\s+-\s+reject/) || [];
+          if (pattern) rewriteSection += `${pattern} - reject\n`;
         }
         else if (line.includes('url script-response-body')) {
           const [, url, scriptUrl] = line.match(/(^.*?)\s+url\s+script-response-body\s+(.*)/) || [];
@@ -74,7 +82,7 @@ async function convertScripts() {
                           (metadata.author ? `#!author=${metadata.author}\n` : '') +
                           (metadata.icon ? `#!icon=${metadata.icon}\n` : '') +
                           (metadata.category ? `#!category=${metadata.category}\n` : '');
-      const surgeModule = `${surgeHeader}\n${ruleSection}\n${scriptSection}\n${mitmSection}`.trim();
+      const surgeModule = `${surgeHeader}\n${ruleSection}${rewriteSection}\n${scriptSection}\n${mitmSection}`.trim();
       const surgeOutput = path.join(surgeDir, `${baseName}.sgmodule`);
       await fs.writeFile(surgeOutput, surgeModule);
       console.log(`Generated ${baseName}.sgmodule for Surge`);
@@ -87,9 +95,9 @@ async function convertScripts() {
                          (metadata.icon ? `#!icon=${metadata.icon}\n` : '') +
                          (metadata.category ? `#!category=${metadata.category}\n` : '');
 
-      // Reset scriptSection for Loon-specific format
+      // Adjust for Loon: rewriteSection becomes [Rewrite], reset scriptSection and mitmSection
+      if (rewriteSection) rewriteSection = rewriteSection.replace('[URL Rewrite]', '[Rewrite]');
       scriptSection = '[Script]\n';
-      // Reset mitmSection for Loon without %APPEND%
       mitmSection = '[MITM]\n';
       lines.forEach(line => {
         if (line.includes('url script-response-body')) {
@@ -104,7 +112,7 @@ async function convertScripts() {
         }
       });
 
-      const loonPlugin = `${loonHeader}\n${ruleSection}\n${scriptSection}\n${mitmSection}`.trim();
+      const loonPlugin = `${loonHeader}\n${ruleSection}${rewriteSection}\n${scriptSection}\n${mitmSection}`.trim();
       const loonOutput = path.join(loonDir, `${baseName}.plugin`);
       await fs.writeFile(loonOutput, loonPlugin);
       console.log(`Generated ${baseName}.plugin for Loon`);
