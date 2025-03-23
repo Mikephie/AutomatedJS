@@ -1,4 +1,4 @@
-name: Platform-Specific Converter
+name: Fixed Platform Converter
 
 on:
   push:
@@ -42,9 +42,9 @@ jobs:
             echo "WARNING: Neither folder found, defaulting to QuantumultX"
           fi
       
-      - name: Create platform-specific converter script
+      - name: Create fixed converter script
         run: |
-          cat > platform_specific_converter.py << 'EOF'
+          cat > fixed_converter.py << 'EOF'
           import os
           import re
           import sys
@@ -190,8 +190,45 @@ jobs:
                       'script_responses': []
                   }
           
-          def create_loon_template(info):
-              template = f"""#!name = {info['script_name']}
+          def create_surge_and_loon_templates(info):
+              # Create Surge template
+              surge_template = f"""#!name = {info['script_name']}
+          #!desc={info['desc']}
+          #!category={info['category']}
+          #!author={info['author']}
+          """
+              
+              # Add Rule section for filter rules
+              if info['filter_rules']:
+                  surge_template += "\n[Rule]"
+                  for rule_type, pattern, action in info['filter_rules']:
+                      surge_template += f"\n{rule_type},{pattern},{action}"
+                  surge_template += "\n"
+              
+              # Add Map Local section for rewrite reject rules (Surge uses Map Local for better rejection)
+              if info['rewrite_reject_rules']:
+                  surge_template += "\n[Map Local]"
+                  for rule in info['rewrite_reject_rules']:
+                      # Determine if it's likely JSON or text response
+                      if 'api' in rule.lower() or 'json' in rule.lower() or 'gw' in rule.lower():
+                          surge_template += f"\n{rule} data-type=text data=\"{{}}\" status-code=200"
+                      else:
+                          surge_template += f"\n{rule} data-type=text data=\" \" status-code=200"
+                  surge_template += "\n"
+              
+              # Add Script section for script-response-body
+              if info['script_responses']:
+                  surge_template += "\n[Script]"
+                  for pattern, script_filename in info['script_responses']:
+                      script_name = script_filename.replace('.js', '')
+                      surge_template += f"\n{script_name} = type=http-response, pattern={pattern}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{script_filename}, requires-body=true, max-size=-1, timeout=60"
+                  surge_template += "\n"
+              
+              # Add MITM section
+              surge_template += f"\n\n[MITM]\nhostname = %APPEND% {info['hostname']}"
+              
+              # Create Loon template
+              loon_template = f"""#!name = {info['script_name']}
           #!desc={info['desc']}
           #!category={info['category']}
           #!author={info['author']}
@@ -200,71 +237,33 @@ jobs:
               
               # Add Rule section for filter rules
               if info['filter_rules']:
-                  template += "\n[Rule]"
+                  loon_template += "\n[Rule]"
                   for rule_type, pattern, action in info['filter_rules']:
-                      template += f"\n{rule_type},{pattern},{action}"
-                  template += "\n"
+                      loon_template += f"\n{rule_type},{pattern},{action}"
+                  loon_template += "\n"
               
-              # Add Rewrite section for rewrite reject rules (Loon uses Rewrite section)
+              # Add URL Rewrite section for rewrite reject rules for Loon
               if info['rewrite_reject_rules']:
-                  template += "\n[Rewrite]"
+                  loon_template += "\n[URL Rewrite]"
                   for rule in info['rewrite_reject_rules']:
-                      template += f"\n{rule} reject"
-                  template += "\n"
+                      loon_template += f"\n{rule} reject"
+                  loon_template += "\n"
               
-              # Add Script section for script-response-body
+              # Add Script section for script-response-body for Loon
               if info['script_responses']:
-                  template += "\n[Script]"
+                  loon_template += "\n[Script]"
                   for pattern, script_filename in info['script_responses']:
-                      template += f"\nhttp-response {pattern} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{script_filename}, requires-body=true, timeout=60, tag={info['filename']}"
-                  template += "\n"
+                      loon_template += f"\nhttp-response {pattern} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{script_filename}, requires-body=true, timeout=60, tag={info['filename']}"
+                  loon_template += "\n"
               
-              # Add MITM section
-              template += f"\n[MITM]\nhostname = {info['hostname']}"
+              # Add MITM section for Loon
+              loon_template += f"\n[MITM]\nhostname = {info['hostname']}"
               
-              return template
-          
-          def create_surge_template(info):
-              template = f"""#!name = {info['script_name']}
-          #!desc={info['desc']}
-          #!category={info['category']}
-          #!author={info['author']}
-          """
-              
-              # Add Rule section for filter rules
-              if info['filter_rules']:
-                  template += "\n[Rule]"
-                  for rule_type, pattern, action in info['filter_rules']:
-                      template += f"\n{rule_type},{pattern},{action}"
-                  template += "\n"
-              
-              # Add Map Local section for rewrite reject rules (Surge uses Map Local for better rejection)
-              if info['rewrite_reject_rules']:
-                  template += "\n[Map Local]"
-                  for rule in info['rewrite_reject_rules']:
-                      # Determine if it's likely JSON or text response
-                      if 'api' in rule.lower() or 'json' in rule.lower() or 'gw' in rule.lower():
-                          template += f"\n{rule} data-type=text data=\"{{}}\" status-code=200"
-                      else:
-                          template += f"\n{rule} data-type=text data=\" \" status-code=200"
-                  template += "\n"
-              
-              # Add Script section for script-response-body
-              if info['script_responses']:
-                  template += "\n[Script]"
-                  for pattern, script_filename in info['script_responses']:
-                      script_name = script_filename.replace('.js', '')
-                      template += f"\n{script_name} = type=http-response, pattern={pattern}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{script_filename}, requires-body=true, max-size=-1, timeout=60"
-                  template += "\n"
-              
-              # Add MITM section
-              template += f"\n\n[MITM]\nhostname = %APPEND% {info['hostname']}"
-              
-              return template
+              return surge_template, loon_template
           
           def main():
               if len(sys.argv) < 2:
-                  print("Usage: python platform_specific_converter.py <qx_script_file>")
+                  print("Usage: python fixed_converter.py <qx_script_file>")
                   sys.exit(1)
               
               file_path = sys.argv[1]
@@ -285,8 +284,7 @@ jobs:
               print(f"  Script responses: {', '.join([f'{r[0]}:{r[1]}' for r in info['script_responses']]) if info['script_responses'] else 'None'}")
               
               # Create templates
-              loon_content = create_loon_template(info)
-              surge_content = create_surge_template(info)
+              surge_content, loon_content = create_surge_and_loon_templates(info)
               
               # Write to files
               loon_path = f"Loon/{info['filename']}.plugin"
@@ -318,7 +316,7 @@ jobs:
           for file in "$QX_FOLDER"/*.js; do
             if [ -f "$file" ]; then
               echo "Processing $file..."
-              python platform_specific_converter.py "$file"
+              python fixed_converter.py "$file"
             else
               echo "Warning: No .js files found in $QX_FOLDER"
               break
@@ -330,5 +328,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Surge/ Loon/
-          git diff-index --quiet HEAD || git commit -m "Auto-generate platform-specific templates" || echo "No changes to commit"
+          git diff-index --quiet HEAD || git commit -m "Auto-generate platform-optimized templates" || echo "No changes to commit"
           git push || echo "Nothing to push"
