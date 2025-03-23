@@ -1,0 +1,235 @@
+name: Dynamic File Converter
+
+on:
+  workflow_dispatch:
+    inputs:
+      filename:
+        description: 'File name without extension (e.g., "adblock" for adblock.txt or adblock.js)'
+        required: true
+        type: string
+      file_type:
+        description: 'Optional: Force file type (rule, script, config). Default: auto-detect'
+        required: false
+        type: choice
+        options:
+          - auto
+          - rule
+          - script
+          - config
+        default: 'auto'
+
+permissions:
+  contents: write
+
+jobs:
+  convert-dynamic-file:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Debug repository structure
+        run: |
+          echo "Repository structure:"
+          find . -type f | sort
+          echo "--------------------"
+          
+      - name: Create output directories
+        run: |
+          mkdir -p Surge Loon
+      
+      - name: Find file with fuzzy matching
+        id: find_file
+        run: |
+          FILENAME="${{ github.event.inputs.filename }}"
+          echo "Looking for files matching: *${FILENAME}*"
+          
+          FILE_PATH=$(find . -type f -name "*${FILENAME}*" | sort -r | head -1)
+          
+          if [ -z "$FILE_PATH" ]; then
+            echo "No exact match found, trying case-insensitive search..."
+            FILE_PATH=$(find . -iname "*${FILENAME}*" -type f | sort -r | head -1)
+          fi
+          
+          if [ -z "$FILE_PATH" ]; then
+            echo "Could not find any file matching: ${FILENAME}"
+            echo "Available files:"
+            find . -type f
+            exit 1
+          fi
+          
+          echo "Found file: $FILE_PATH"
+          echo "file_path=$FILE_PATH" >> $GITHUB_OUTPUT
+      
+      - name: Analyze and process file with Node.js
+        run: |
+          FILE_PATH="${{ steps.find_file.outputs.file_path }}"
+          FILENAME=$(basename "$FILE_PATH" | sed 's/\.[^.]*$//') # Remove extension
+          FILE_TYPE="${{ github.event.inputs.file_type }}"
+          echo "Processing file: $FILE_PATH with basename: $FILENAME (Type: $FILE_TYPE)"
+          
+          # Node.js script for dynamic analysis
+          cat > analyze.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          const filePath = process.argv[2];
+          const fileTypeInput = process.argv[3] || 'auto';
+          const filename = path.basename(filePath).replace(/\.[^.]*$/, '');
+          const content = fs.readFileSync(filePath, 'utf8');
+          const lines = content.split('\n').map(line => line.trim());
+
+          // Default metadata
+          let metadata = {
+            name: filename,
+            desc: 'Dynamic Module',
+            author: 'Unknown',
+            category: 'General',
+            update: 'Unknown Date',
+            channel: 'N/A',
+            hostname: 'example.com'
+          };
+          let rules = [];
+          let hostnames = new Set();
+          let fileType = fileTypeInput;
+
+          // Auto-detect file type if not specified
+          if (fileType === 'auto') {
+            if (content.match(/script-(response|request)-body/) || content.match(/\.js$/)) {
+              fileType = 'script';
+            } else if (content.match(/^(#|\/\/)/) || content.match(/url\s+(reject|script-response-body)/)) {
+              fileType = 'rule';
+            } else {
+              fileType = 'config';
+            }
+          }
+          console.log(`Detected file type: ${fileType}`);
+
+          // Helper function to add hostname
+          const addHostname = (line) => {
+            const hostnameMatch = line.match(/(?:hostname\s*=|hostname\s*=)\s*([^#]+)/i);
+            if (hostnameMatch) {
+              hostnameMatch[1].split(',').forEach(h => hostnames.add(h.trim()));
+            }
+          };
+
+          // Parse file based on type
+          for (let line of lines) {
+            if (!line) continue;
+
+            // Metadata from comments
+            if (line.match(/^(#|\/\/)/)) {
+              if (line.match(/项目功能|功能|name/i)) metadata.name = line.replace(/.*(项目功能|功能|name)[:：=\s]*(.*)/i, '$2') || metadata.name;
+              if (line.match(/使用声明|desc|description/i)) metadata.desc = line.replace(/.*(使用声明|desc|description)[:：=\s]*(.*)/i, '$2') || metadata.desc;
+              if (line.match(/脚本作者|author/i)) metadata.author = line.replace(/.*(脚本作者|author)[:：=\s]*(.*)/i, '$2') || metadata.author;
+              if (line.match(/更新日期|update|date/i)) metadata.update = line.replace(/.*(更新日期|update|date)[:：=\s]*(.*)/i, '$2') || metadata.update;
+              if (line.match(/电报频道|channel|telegram/i)) metadata.channel = line.replace(/.*(电报频道|channel|telegram)[:：=\s]*(.*)/i, '$2') || metadata.channel;
+              addHostname(line);
+            } 
+            // Metadata from key-value pairs (for scripts/configs)
+            else if (line.match(/^\w+\s*=/)) {
+              const [key, value] = line.split(/\s*=\s*/).map(s => s.trim().replace(/^["']|["']$/g, ''));
+              if (['name', 'desc', 'author', 'category', 'update', 'channel', 'hostname'].includes(key.toLowerCase())) {
+                metadata[key.toLowerCase()] = value;
+              }
+              addHostname(line);
+            }
+            // Collect rules
+            else if (fileType === 'rule' && line.match(/^(http|\^https?)/)) {
+              rules.push(line);
+            }
+          }
+
+          // Fallback hostname from rules if none found
+          if (hostnames.size === 0 && rules.length > 0) {
+            rules.forEach(rule => {
+              const domainMatch = rule.match(/https?:\/\/([^\/]+)/);
+              if (domainMatch) hostnames.add(domainMatch[1]);
+            });
+          }
+
+          // Output metadata and results
+          console.log(`NAME=${metadata.name}`);
+          console.log(`DESC=${metadata.desc}`);
+          console.log(`AUTHOR=${metadata.author}`);
+          console.log(`CATEGORY=${metadata.category}`);
+          console.log(`UPDATE=${metadata.update}`);
+          console.log(`CHANNEL=${metadata.channel}`);
+          console.log(`HOSTNAMES=${Array.from(hostnames).join(', ')}`);
+          console.log(`RULES=${rules.join('\n')}`);
+          console.log(`FILE_TYPE=${fileType}`);
+          EOF
+          
+          # Run analysis
+          node analyze.js "$FILE_PATH" "$FILE_TYPE" > extracted_data.txt
+          
+          # Source extracted data
+          . ./extracted_data.txt
+          
+          # Create Surge module
+          if [ "$FILE_TYPE" = "rule" ]; then
+            cat > "Surge/${FILENAME}.sgmodule" << EOF
+            #!name = ${NAME}
+            #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
+            #!author = ${AUTHOR}
+            #!category = ${CATEGORY}
+            
+            ${RULES}
+            
+            [MITM]
+            hostname = %APPEND% ${HOSTNAMES}
+            EOF
+          else
+            cat > "Surge/${FILENAME}.sgmodule" << EOF
+            #!name = ${NAME}
+            #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
+            #!author = ${AUTHOR}
+            #!category = ${CATEGORY}
+            
+            [Script]
+            ${FILENAME} = type=http-response, pattern=^https?://${HOSTNAMES}/, script-path=https://raw.githubusercontent.com/user/repo/main/${FILENAME}.js, requires-body=true, max-size=-1, timeout=60
+            
+            [MITM]
+            hostname = %APPEND% ${HOSTNAMES}
+            EOF
+          fi
+          
+          # Create Loon plugin
+          if [ "$FILE_TYPE" = "rule" ]; then
+            cat > "Loon/${FILENAME}.plugin" << EOF
+            #!name = ${NAME}
+            #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
+            #!author = ${AUTHOR}
+            #!category = ${CATEGORY}
+            
+            ${RULES}
+            
+            [MITM]
+            hostname = ${HOSTNAMES}
+            EOF
+          else
+            cat > "Loon/${FILENAME}.plugin" << EOF
+            #!name = ${NAME}
+            #!desc = ${DESC} (Telegram: ${CHANNEL}, Updated: ${UPDATE})
+            #!author = ${AUTHOR}
+            #!category = ${CATEGORY}
+            
+            [Script]
+            http-response ^https?://${HOSTNAMES}/ script-path=https://raw.githubusercontent.com/user/repo/main/${FILENAME}.js, requires-body=true, timeout=60, tag=${FILENAME}
+            
+            [MITM]
+            hostname = ${HOSTNAMES}
+            EOF
+          fi
+          
+          echo "Created Surge module: Surge/${FILENAME}.sgmodule"
+          echo "Created Loon plugin: Loon/${FILENAME}.plugin"
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Surge/ Loon/
+          git diff-index --quiet HEAD || git commit -m "Convert dynamic file: ${{ github.event.inputs.filename }}" || echo "No changes to commit"
+          git push || echo "Nothing to push"
