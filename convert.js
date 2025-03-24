@@ -86,7 +86,7 @@ async function convertScripts() {
       const surgeOutput = path.join(surgeDir, `${baseName}.sgmodule`);
       await fs.writeFile(surgeOutput, surgeModule);
       console.log(`Generated ${baseName}.sgmodule for Surge`);
-      console.log(`Surge content (first 100 chars): ${surgeModule.substring(0, 100)}...`);
+      console.log(`Surge content (first 200 chars): ${surgeModule.substring(0, 200)}...`);
 
       // Loon .plugin format with #! metadata and spacing
       const loonHeader = `#!name=${metadata.name}\n` +
