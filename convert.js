@@ -66,7 +66,10 @@ async function convertScripts() {
                         rewriteSection += '[URL Rewrite]\n';
                         scriptSection += '[Script]\n';
                     }
-                    else if (line.startsWith('[Script]')) scriptSection += '[Script]\n';
+                    else if (line.startsWith('[Script]')) {
+                        // Reset script section to ensure we don't duplicate the header
+                        scriptSection = '[Script]\n';
+                    }
                     else if (line.startsWith('[mitm]')) mitmSection += '[MITM]\n';
                     else if (line.includes('url-regex') && line.includes('reject') && ruleSection) {
                         // Handle specific URL-REGEX patterns with '^' anchor
@@ -98,6 +101,10 @@ async function convertScripts() {
                     }
                     else if (line.startsWith('hostname =')) {
                         const [, hostname] = line.match(/hostname = (.*)/) || [];
+                        // Check if we've already added [MITM] to the section
+                        if (!mitmSection.includes('[MITM]')) {
+                            mitmSection = '[MITM]\n';
+                        }
                         if (hostname) mitmSection += `hostname = %APPEND% ${hostname}\n`;
                     }
                 });
@@ -112,13 +119,8 @@ async function convertScripts() {
                 // Only include [URL Rewrite] if there are actual rewrite rules
                 let surgeRewriteSection = hasRewriteRules ? rewriteSection : '';
                 
-                // Ensure [MITM] section appears before hostname line
-                let fixedMitmSection = '';
-                if (mitmSection) {
-                    fixedMitmSection = mitmSection;
-                }
-                
-                const surgeModule = `${surgeHeader}\n${ruleSection}${surgeRewriteSection}${scriptSection}\n${fixedMitmSection}`.trim();
+                // Ensure proper spacing and [MITM] section appears before hostname line
+                const surgeModule = `${surgeHeader}\n${ruleSection}${surgeRewriteSection}${scriptSection}\n${mitmSection}`.trim();
                 const surgeOutput = path.join(surgeDir, `${baseName}.sgmodule`);
                 console.log(`Writing Surge file: ${surgeOutput}`);
                 await fs.writeFile(surgeOutput, surgeModule, { flag: 'w', encoding: 'utf-8' });
@@ -169,7 +171,8 @@ async function convertScripts() {
                     }
                 });
 
-                const loonPlugin = `${loonHeader}\n${ruleSection}${loonRewriteSection}\n${loonScriptSection}\n${loonMitmSection}`.trim();
+                // For Loon format, we need proper spacing between sections
+                const loonPlugin = `${loonHeader}\n${ruleSection}${loonRewriteSection}${loonScriptSection}${loonMitmSection}`.trim();
                 const loonOutput = path.join(loonDir, `${baseName}.plugin`);
                 console.log(`Writing Loon file: ${loonOutput}`);
                 await fs.writeFile(loonOutput, loonPlugin, { flag: 'w', encoding: 'utf-8' });
