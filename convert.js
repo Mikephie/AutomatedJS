@@ -56,11 +56,13 @@ async function convertScripts() {
           scriptSection += '[Script]\n';
         }
         else if (line.startsWith('[mitm]')) mitmSection += '[MITM]\n';
-        else if (line.includes('url-regex') && line.includes('reject')) {
+        else if (line.includes('url-regex') && line.includes('reject') && ruleSection) {
+          // Only add to [Rule] if [filter_local] is present
           const [, pattern] = line.match(/url-regex,(.*?),reject/) || [];
           if (pattern) ruleSection += `URL-REGEX,"${pattern}",REJECT\n`;
         }
-        else if (line.includes(' - reject')) {
+        else if (line.includes(' - reject') && rewriteSection) {
+          // Only add to [URL Rewrite]/[Rewrite] if [rewrite_local] is present
           const [, pattern] = line.match(/(^.*?)\s+-\s+reject/) || [];
           if (pattern) rewriteSection += `${pattern} - reject\n`;
         }
