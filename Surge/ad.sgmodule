@@ -1,0 +1,10 @@
+#!name = ad
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+ad = type=http-response, pattern=^https?://example.com/, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/jhad.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% *.m.taobao.com
