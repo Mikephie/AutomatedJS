@@ -1,0 +1,11 @@
+#!name=adblockpro
+#!desc=浏览器广告拦截
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/adblockpro.png
+#!category=🔐APP
+
+[Script]
+adblockpro = type=http-response, pattern=^https:\/\/api\.adblockpro\.app\/verify, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/adblockpro.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% api.adblockpro.app
