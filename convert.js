@@ -54,7 +54,8 @@ async function convertScripts() {
 
                 lines.forEach(line => {
                     // Parse metadata from comments
-                    if (line.startsWith('#!desc=')) metadata.desc = line.replace('#!desc=', '');
+                    if (line.startsWith('#!name=')) metadata.name = line.replace('#!name=', '');
+                    else if (line.startsWith('#!desc=')) metadata.desc = line.replace('#!desc=', '');
                     else if (line.startsWith('#!category=')) metadata.category = line.replace('#!category=', '');
                     else if (line.startsWith('#!author=')) metadata.author = line.replace('#!author=', '');
                     else if (line.startsWith('#!icon=')) metadata.icon = line.replace('#!icon=', '');
@@ -65,6 +66,7 @@ async function convertScripts() {
                         rewriteSection += '[URL Rewrite]\n';
                         scriptSection += '[Script]\n';
                     }
+                    else if (line.startsWith('[Script]')) scriptSection += '[Script]\n';
                     else if (line.startsWith('[mitm]')) mitmSection += '[MITM]\n';
                     else if (line.includes('url-regex') && line.includes('reject') && ruleSection) {
                         // Handle specific URL-REGEX patterns with '^' anchor
@@ -90,6 +92,10 @@ async function convertScripts() {
                             scriptSection += `${baseName} = type=http-response, pattern=${url}, script-path=${scriptUrl}, requires-body=true, max-size=-1, timeout=60\n`;
                         }
                     }
+                    else if (line.includes('type=http-response')) {
+                        // Already in Surge format, just add it directly
+                        scriptSection += `${line}\n`;
+                    }
                     else if (line.startsWith('hostname =')) {
                         const [, hostname] = line.match(/hostname = (.*)/) || [];
                         if (hostname) mitmSection += `hostname = %APPEND% ${hostname}\n`;
@@ -105,7 +111,14 @@ async function convertScripts() {
                 
                 // Only include [URL Rewrite] if there are actual rewrite rules
                 let surgeRewriteSection = hasRewriteRules ? rewriteSection : '';
-                const surgeModule = `${surgeHeader}\n${ruleSection}${surgeRewriteSection}\n${scriptSection}\n${mitmSection}`.trim();
+                
+                // Ensure [MITM] section appears before hostname line
+                let fixedMitmSection = '';
+                if (mitmSection) {
+                    fixedMitmSection = mitmSection;
+                }
+                
+                const surgeModule = `${surgeHeader}\n${ruleSection}${surgeRewriteSection}${scriptSection}\n${fixedMitmSection}`.trim();
                 const surgeOutput = path.join(surgeDir, `${baseName}.sgmodule`);
                 console.log(`Writing Surge file: ${surgeOutput}`);
                 await fs.writeFile(surgeOutput, surgeModule, { flag: 'w', encoding: 'utf-8' });
@@ -122,22 +135,41 @@ async function convertScripts() {
 
                 // Only include [Rewrite] if there are actual rewrite rules
                 let loonRewriteSection = hasRewriteRules ? rewriteSection.replace('[URL Rewrite]', '[Rewrite]') : '';
-                scriptSection = '[Script]\n';
-                mitmSection = '[MITM]\n';
+                
+                // Rebuild script section for Loon
+                let loonScriptSection = '[Script]\n';
                 lines.forEach(line => {
                     if (line.includes('url script-response-body')) {
                         const [, url, scriptUrl] = line.match(/(^.*?)\s+url\s+script-response-body\s+(.*)/) || [];
                         if (url && scriptUrl) {
-                            scriptSection += `http-response ${url} script-path=${scriptUrl}, requires-body=true, timeout=60, tag=${baseName}\n`;
+                            loonScriptSection += `http-response ${url} script-path=${scriptUrl}, requires-body=true, timeout=60, tag=${baseName}\n`;
                         }
                     }
-                    else if (line.startsWith('hostname =')) {
+                    else if (line.includes('type=http-response')) {
+                        // Convert Surge format to Loon format
+                        const pattern = line.match(/pattern=([^,]+)/)?.[1];
+                        const scriptPath = line.match(/script-path=([^,]+)/)?.[1];
+                        const name = line.match(/^([^=]+)=/)?.[1]?.trim();
+                        
+                        if (pattern && scriptPath) {
+                            loonScriptSection += `http-response ${pattern} script-path=${scriptPath}, requires-body=true, timeout=60, tag=${name || baseName}\n`;
+                        }
+                    }
+                });
+                
+                // Build MITM section for Loon
+                let loonMitmSection = '[MITM]\n';
+                lines.forEach(line => {
+                    if (line.startsWith('hostname =')) {
                         const [, hostname] = line.match(/hostname = (.*)/) || [];
-                        if (hostname) mitmSection += `hostname = ${hostname}\n`;
+                        if (hostname) {
+                            // For Loon, we don't need %APPEND%
+                            loonMitmSection += `hostname = ${hostname.replace('%APPEND% ', '')}\n`;
+                        }
                     }
                 });
 
-                const loonPlugin = `${loonHeader}\n${ruleSection}${loonRewriteSection}\n${scriptSection}\n${mitmSection}`.trim();
+                const loonPlugin = `${loonHeader}\n${ruleSection}${loonRewriteSection}\n${loonScriptSection}\n${loonMitmSection}`.trim();
                 const loonOutput = path.join(loonDir, `${baseName}.plugin`);
                 console.log(`Writing Loon file: ${loonOutput}`);
                 await fs.writeFile(loonOutput, loonPlugin, { flag: 'w', encoding: 'utf-8' });
