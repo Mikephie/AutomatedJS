@@ -198,7 +198,7 @@ jobs:
                   template += "\n"
               
               # Add Script section
-              template += f"\n[Script]\nhttp-response {info['url_pattern']} script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['script_path']}, requires-body=true, timeout=60, tag={info['filename']}"
+              template += f"\n[Script]\nhttp-response {info['url_pattern']} script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/{info['script_path']}, requires-body=true, timeout=60, tag={info['filename']}"
               
               # Add MITM section
               template += f"\n\n[MITM]\nhostname = {info['hostname']}"
@@ -227,7 +227,7 @@ jobs:
                   template += "\n"
               
               # Add Script section
-              template += f"\n[Script]\n{info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/{info['script_path']}, requires-body=true, max-size=-1, timeout=60"
+              template += f"\n[Script]\n{info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/{info['script_path']}, requires-body=true, max-size=-1, timeout=60"
               
               # Add MITM section
               template += f"\n\n[MITM]\nhostname = %APPEND% {info['hostname']}"
