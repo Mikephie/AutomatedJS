@@ -8,7 +8,7 @@ URL-REGEX,^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace,R
 URL-REGEX,^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/highlight,REJECT
 
 [Script]
-axs = type=http-response, pattern=^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$, script-path=https://raw.githubusercontent.com/Mikephie/Script/main/qx/axs.js, requires-body=true, max-size=-1, timeout=60
+axs = type=http-response, pattern=^https?:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/InfoPage\/.*$, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/axs.js, requires-body=true, max-size=-1, timeout=60
 
 [MITM]
 hostname = %APPEND% m-station2.axs.com.sg
