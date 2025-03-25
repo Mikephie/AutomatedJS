@@ -1,0 +1,352 @@
+{
+  "LivePo": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "livepo_lifetime_pro",
+    "latestReceipt": "mikephie"
+  },
+  "FETreeVideoChange": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.dj.videototext.forever",
+    "latestReceipt": "mikephie"
+  },
+  "%E5%B0%8F%E5%B0%8F%E7%9B%B8%E6%9C%BA%E5%A4%A7%E5%B8%88": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.ai.merge.forever.vip",
+    "latestReceipt": "mikephie"
+  },
+  "Whiteboard": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "cn.readpad.tool.iwhiteboard.coffee006",
+    "latestReceipt": "mikephie"
+  },
+  "RandomSpin": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.Spin.The.Wheel.Random.Picker.decision.maker.yearly",
+    "latestReceipt": "mikephie"
+  },
+  "com.qingcheng.seal.Seal": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.qingcheng.seal.Seal.premium.forever",
+    "latestReceipt": "mikephie"
+  },
+  "YinzhangMaster": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.xiaoqi.seal.forever",
+    "latestReceipt": "mikephie"
+  },
+  "com.cuilingshi.flipclock": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "FlipClockProVersion",
+    "latestReceipt": "mikephie"
+  },
+  "%E6%88%90%E8%AA%9E%E7%8C%9C%E7%8C%9C": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.agedstudio.word.puzzle.chengyucaicai.yearly",
+    "latestReceipt": "mikephie"
+  },
+  "Cam Translator": {
+    "processType": "timeb2",
+    "handlerType": "hxpda",
+    "productId": "co.vulcanlabs.pictranslator.lifetime",
+    "additionalProductId": "co.vulcanlabs.pictranslator.offlinelifetime1",
+    "latestReceipt": "mikephie"
+  },
+  "VLLO": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.vimosoft.vllo.premium3.annually_subscription",
+    "latestReceipt": "mikephie"
+  },
+  "com.casttv.remotetv": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "liftetime2",
+    "latestReceipt": "mikephie"
+  },
+  "com.eleven.chatgpt": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.chatgpt.yearly",
+    "latestReceipt": "mikephie"
+  },
+  "ChickAlarmClock": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.ChickFocus.ChickFocus.yearly_2023_promo",
+    "latestReceipt": "mikephie"
+  },
+  "iVCam": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "ivcam.full",
+    "latestReceipt": "mikephie"
+  },
+  "ProKnockOut": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.knockout.SVIP.50off",
+    "latestReceipt": "mikephie"
+  },
+  "Prettya": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.floatcamellia.prettyup.onetimepurchase",
+    "latestReceipt": "mikephie"
+  },
+  "TWWeatherMajor": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.highonemob.weather.base.w",
+    "latestReceipt": "mikephie"
+  },
+  "UCamera": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "644377109928",
+    "latestReceipt": "mikephie"
+  },
+  "com.pocket.photo": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.pocket.photo.yearly",
+    "latestReceipt": "mikephie"
+  },
+  "HashPhotos": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.kobaltlab.HashPhotos.iap.allinone.free",
+    "latestReceipt": "mikephie"
+  },
+  "AllMyBatteries": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "AllMyBatteries_Ultimate",
+    "latestReceipt": "mikephie"
+  },
+  "Subscriptions": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.touchbits.subscriptions.iap.pro.yearly",
+    "latestReceipt": "mikephie"
+  },
+  "TimeCut": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.floatcamellia.hfrslowmotion.forevervip",
+    "latestReceipt": "mikephie"
+  },
+  "imgplay": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "me.imgbase.imgplay.subscriptionYearly",
+    "latestReceipt": "mikephie"
+  },
+  "intolive": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "me.imgbase.intolive.proSubYearly",
+    "latestReceipt": "mikephie"
+  },
+  "PhotosSorter": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "sorter.pro.ipa",
+    "latestReceipt": "mikephie"
+  },
+  "OneExtractor": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.OneExtractor.Video.Forever",
+    "latestReceipt": "mikephie"
+  },
+  "Xfuse": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.xfuse.ProVision",
+    "latestReceipt": "mikephie"
+  },
+  "Boom": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.globaldelight.iBoom.LifetimeDiscountPack",
+    "latestReceipt": "mikephie"
+  },
+  "com.BertonYc.ScannerOCR": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "Scanner_Subscibe_Permanent",
+    "latestReceipt": "mikephie"
+  },
+  "darkWeb": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "dforce_unlock_all_functions",
+    "latestReceipt": "mikephie"
+  },
+  "VideoHelper": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "vip_service",
+    "latestReceipt": "mikephie"
+  },
+  "WiseMate": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "wiseart.ai.ios.week.nofree",
+    "latestReceipt": "mikephie"
+  },
+  "Ever%20Play": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "om.zhangchao.AudioPlayer.subscription.oneWeek",
+    "latestReceipt": "mikephie"
+  },
+  "qxwp%20copy": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.chowjoe.wp2free.year.pro",
+    "latestReceipt": "mikephie"
+  },
+  "PhimCiaj": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.jiancent.calligraphymaster.lifetime",
+    "latestReceipt": "mikephie"
+  },
+  "CodeSnippet": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "it.beatcode.codesnippetpro.annualSubscription",
+    "latestReceipt": "mikephie"
+  },
+  "VDIT": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "me.imgbase.videoday.profeaturesYearly",
+    "latestReceipt": "mikephie"
+  },
+  "com.tinymediapower.livephotowallpapers": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "livewp_group_d_year",
+    "latestReceipt": "mikephie"
+  },
+  "OXNotchLockPets": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "Notchweekvip",
+    "latestReceipt": "mikephie"
+  },
+  "Packet": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.aaaalab.nepacket.iap.full",
+    "latestReceipt": "mikephie"
+  },
+  "PhotoCollagePro": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "PHOTABLE_PREMIUM",
+    "latestReceipt": "mikephie"
+  },
+  "iscreen": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "com.zerone.hidesktop.forever",
+    "latestReceipt": "mikephie"
+  },
+  "Pollykann": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "vip.forever.pollykann",
+    "latestReceipt": "mikephie"
+  },
+  "iClear": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.youthpe.retake.yearly",
+    "latestReceipt": "mikephie"
+  },
+  "IconChange": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "iconeryearvip",
+    "latestReceipt": "mikephie"
+  },
+  "life.journal.diary": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "life.journal.diary.lifetime",
+    "latestReceipt": "mikephie"
+  },
+  "com.floatcamellia.motionninja": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.floatcamellia.motionninja.yearlyvip",
+    "latestReceipt": "mikephie"
+  },
+  "com.iuuapp.audiomaker": {
+    "processType": "timea2",
+    "handlerType": "hxpda",
+    "productId": "com.iuuapp.audiomaker.cloud.year",
+    "additionalProductId": "com.iuuapp.audiomaker.removeads",
+    "latestReceipt": "mikephie"
+  },
+  "com.alphamobiletech.bodyApp": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "Bodyapp_Forever",
+    "latestReceipt": "mikephie"
+  },
+  "com.alphamobiletech.facey": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "Facey_Forever",
+    "latestReceipt": "mikephie"
+  },
+  "com.ideack.BusinessCard": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "BusinessCardVipPerpetual",
+    "latestReceipt": "mikephie"
+  },
+  "com.ideack.MagicAudio": {
+    "processType": "timeb",
+    "handlerType": "hxpdb",
+    "productId": "MagicAudioPermanent",
+    "latestReceipt": "mikephie"
+  },
+  "DuChuangZhe": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "org.zrey.du.main",
+    "latestReceipt": "mikephie"
+  },
+  "PhotoWhite": {
+    "processType": "timeb",
+    "handlerType": "hxpda",
+    "productId": "org.zrey.photowhite.flash_lifetime",
+    "latestReceipt": "mikephie"
+  },
+  "ECGANALYZER": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.wms.hrv.yearlyfamilysharing",
+    "latestReceipt": "mikephie"
+  },
+  "com.RuoG.Pixiu": {
+    "processType": "timea",
+    "handlerType": "hxpda",
+    "productId": "com.RuoG.Pixiu.VIPYear",
+    "latestReceipt": "mikephie"
+  }
+}
