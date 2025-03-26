@@ -5,14 +5,18 @@
   "bundleId": "com.wms.hrv",
   "subscriptionCount": {
     "expected": 89,
-    "actual": 1,
+    "actual": 2,
     "complete": false
   },
   "subscriptions": [
+    {
+      "id": 3,
+      "productId": "com.wms.hrv.pro"
+    },
     {
       "id": 5,
       "productId": "com.wms.hrv.yearlyfamilysharing"
     }
   ],
-  "updatedAt": "2025-03-26T05:24:55.499Z"
+  "updatedAt": "2025-03-26T06:52:01.941Z"
 }
