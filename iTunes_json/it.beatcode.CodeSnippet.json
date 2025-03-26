@@ -1,0 +1,17 @@
+{
+  "name": "CodeSnippet PRO: Code At Hand >",
+  "appStoreLink": "",
+  "appId": "6446122936",
+  "bundleId": "it.beatcode.CodeSnippet",
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "it.beatcode.codesnippetpro.monthlySubscription"
+    },
+    {
+      "id": 3,
+      "productId": "it.beatcode.codesnippetpro.lifetime 22:15"
+    }
+  ],
+  "updatedAt": "2025-03-26T21:40:04.767Z"
+}
