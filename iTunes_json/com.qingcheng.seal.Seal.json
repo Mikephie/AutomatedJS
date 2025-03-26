@@ -1,13 +1,8 @@
 {
   "name": "印章制作-一键生成印章，轻松制作公章 章",
-  "appStoreLink": "https://apps.apple.com/my/app/%E5%8D%B0%E7...",
+  "appStoreLink": "",
   "appId": "1584991347",
   "bundleId": "com.qingcheng.seal.Seal",
-  "subscriptionCount": {
-    "expected": 4,
-    "actual": 4,
-    "complete": true
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -23,8 +18,8 @@
     },
     {
       "id": 4,
-      "productId": "com.qingcheng.seal.Seal.premium.yearly"
+      "productId": "com.qingcheng.seal.Seal.premium.yearly 15:23"
     }
   ],
-  "updatedAt": "2025-03-26T07:24:10.537Z"
+  "updatedAt": "2025-03-26T11:16:36.637Z"
 }
