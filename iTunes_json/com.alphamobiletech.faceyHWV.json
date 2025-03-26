@@ -1,0 +1,41 @@
+{
+  "name": "Facey: Face Editor &Makeup Cam App ID: 1387741890",
+  "appStoreLink": "",
+  "appId": "",
+  "bundleId": "com.alphamobiletech.faceyHWV",
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "Facey_1W"
+    },
+    {
+      "id": 3,
+      "productId": "Facey_1W_no_trial"
+    },
+    {
+      "id": 4,
+      "productId": "Facey_1M"
+    },
+    {
+      "id": 5,
+      "productId": "Facey_1M_B"
+    },
+    {
+      "id": 7,
+      "productId": "Facey_SP_1Y"
+    },
+    {
+      "id": 9,
+      "productId": "Facey_1M_Discount"
+    },
+    {
+      "id": 10,
+      "productId": "Facey_SP_K_1Y"
+    },
+    {
+      "id": 11,
+      "productId": "Facey_SP_K_1Y_B"
+    }
+  ],
+  "updatedAt": "2025-03-26T14:19:27.070Z"
+}
