@@ -1,6 +1,6 @@
 {
-  "name": "Audio Editor - Music editor",
-  "appStoreLink": "https://apps.apple.com/my/app/audio-editor-music…",
+  "name": "Audio Editor Music editor",
+  "appStoreLink": "https://apps.apple.com/my/app/audio-editor-music...",
   "appId": "1493256837",
   "bundleId": "com.iuuapp.audiomaker",
   "subscriptions": [
@@ -33,5 +33,5 @@
       "productId": "com.iuuapp.audiomaker.removeads.year"
     }
   ],
-  "updatedAt": "2025-03-26T00:13:14.722Z"
+  "updatedAt": "2025-03-26T02:08:32.169Z"
 }
