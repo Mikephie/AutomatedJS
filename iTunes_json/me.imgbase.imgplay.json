@@ -1,0 +1,34 @@
+{
+  "name": "ImgPlay: GIF Maker Meme",
+  "appStoreLink": "https://apps.apple.com/my/app/imgplay-gif-maker-...",
+  "appId": "989843523",
+  "bundleId": "me.imgbase.imgplay",
+  "subscriptionCount": {
+    "expected": 91,
+    "actual": 5,
+    "complete": false
+  },
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "me.imgbase.imgplay.profeatures2018"
+    },
+    {
+      "id": 2,
+      "productId": "me.imgbase.imgplay.subscriptionWeekly"
+    },
+    {
+      "id": 3,
+      "productId": "me.imgbase.imgplay.subscriptionYearly"
+    },
+    {
+      "id": 4,
+      "productId": "me.imgbase.imgplay.subscriptionMonthly"
+    },
+    {
+      "id": 5,
+      "productId": "me.imgbase.imgplay.proUpgradeFromLegacy"
+    }
+  ],
+  "updatedAt": "2025-03-26T05:14:35.206Z"
+}
