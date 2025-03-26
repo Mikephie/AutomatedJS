@@ -3,11 +3,6 @@
   "appStoreLink": "",
   "appId": "6504040083",
   "bundleId": "com.xiaoqi.yinzhang",
-  "subscriptionCount": {
-    "expected": 2,
-    "actual": 3,
-    "complete": true
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -22,5 +17,5 @@
       "productId": "com.xiaoqi.seal.forever"
     }
   ],
-  "updatedAt": "2025-03-26T07:28:41.451Z"
+  "updatedAt": "2025-03-26T11:25:46.290Z"
 }
