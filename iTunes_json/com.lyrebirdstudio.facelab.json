@@ -4,27 +4,10 @@
   "appId": "1530776865",
   "bundleId": "com.lyrebirdstudio.facelab",
   "subscriptionCount": {
-    "expected": 7,
-    "actual": 4,
-    "complete": false
+    "expected": 0,
+    "actual": 0,
+    "complete": true
   },
-  "subscriptions": [
-    {
-      "id": 1,
-      "productId": "com.lyrebirdstudio.facelab.iap.subscription.weekly7a 2 com.lyrebirdstudio.facelab.iap.subscription.weekly7b 3 weeklyF13"
-    },
-    {
-      "id": 4,
-      "productId": "weeklyF10"
-    },
-    {
-      "id": 6,
-      "productId": "yearly3DayFree3999"
-    },
-    {
-      "id": 7,
-      "productId": "com.lyrebirdstudio.facelab.iap.subscription.weekly7c 8 com.lyrebirdstudio.facelab.iap.subscription.weekly8b 9 com.lyrebirdstudio.facelab.iap.subscription.yearly4e 10 com.lyrebirdstudio.facelab.iap.subscription.yearly4d"
-    }
-  ],
-  "updatedAt": "2025-03-26T07:44:44.057Z"
+  "subscriptions": [],
+  "updatedAt": "2025-03-26T07:56:00.305Z"
 }
