@@ -1,0 +1,18 @@
+{
+  "name": "ECG+ Analyzer for QTc HRV",
+  "appStoreLink": "https://apps.apple.com/my/app/ecg-analyzer-for-q...",
+  "appId": "1567047859",
+  "bundleId": "com.wms.hrv",
+  "subscriptionCount": {
+    "expected": 89,
+    "actual": 1,
+    "complete": false
+  },
+  "subscriptions": [
+    {
+      "id": 5,
+      "productId": "com.wms.hrv.yearlyfamilysharing"
+    }
+  ],
+  "updatedAt": "2025-03-26T05:24:55.499Z"
+}
