@@ -5,12 +5,28 @@
   "bundleId": "com.loveyouchenapps.knockout",
   "subscriptions": [
     {
+      "id": 1,
+      "productId": "com.knockout.7daysplus"
+    },
+    {
+      "id": 2,
+      "productId": "com.knockout.halfyearplus"
+    },
+    {
       "id": 3,
       "productId": "com.loveyouchenapps.knockout.highresolution"
     },
     {
+      "id": 5,
+      "productId": "com.knockout.1monthplus"
+    },
+    {
       "id": 6,
       "productId": "com.knockout.1yearplus"
+    },
+    {
+      "id": 7,
+      "productId": "com.loveyouchenapps.knockout.1y"
     },
     {
       "id": 8,
@@ -18,12 +34,12 @@
     },
     {
       "id": 9,
-      "productId": "com.knockout.SVIP.50off"
+      "productId": "com.knockout.7daysplus.50off"
     },
     {
-      "id": 11,
-      "productId": "com.knockout.7daysplus"
+      "id": 10,
+      "productId": "com.knockout.1monthplus.50off"
     }
   ],
-  "updatedAt": "2025-03-26T02:07:52.849Z"
+  "updatedAt": "2025-03-26T03:45:33.928Z"
 }
