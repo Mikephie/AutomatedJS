@@ -1,13 +1,8 @@
 {
   "name": "FaceLab: Face Age, Aging, Hair",
-  "appStoreLink": "https://apps.apple.com/my/app/facelab-face-age-a...",
+  "appStoreLink": "",
   "appId": "1530776865",
   "bundleId": "com.lyrebirdstudio.facelab",
-  "subscriptionCount": {
-    "expected": 10,
-    "actual": 10,
-    "complete": true
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -27,7 +22,7 @@
     },
     {
       "id": 5,
-      "productId": "com.Iyrebirdstudio.facelab.iap.subscription.weekly10b .5"
+      "productId": "com.lyrebirdstudio.facelab.iap.subscription.weekly10b"
     },
     {
       "id": 6,
@@ -44,11 +39,7 @@
     {
       "id": 9,
       "productId": "com.lyrebirdstudio.facelab.iap.subscription.yearly4e"
-    },
-    {
-      "id": 10,
-      "productId": "com.lyrebirdstudio.facelab.iap.subscription.yearly4d"
     }
   ],
-  "updatedAt": "2025-03-26T08:01:00.848Z"
+  "updatedAt": "2025-03-26T11:20:49.455Z"
 }
