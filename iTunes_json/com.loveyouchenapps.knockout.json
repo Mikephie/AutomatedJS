@@ -3,6 +3,11 @@
   "appStoreLink": "",
   "appId": "944665061",
   "bundleId": "com.loveyouchenapps.knockout",
+  "subscriptionCount": {
+    "expected": 13,
+    "actual": 9,
+    "complete": false
+  },
   "subscriptions": [
     {
       "id": 1,
@@ -41,5 +46,5 @@
       "productId": "com.knockout.1monthplus.50off"
     }
   ],
-  "updatedAt": "2025-03-26T03:45:33.928Z"
+  "updatedAt": "2025-03-26T04:12:56.390Z"
 }
