@@ -3,6 +3,11 @@
   "appStoreLink": "https://apps.apple.com/my/app/camera-translator-t...",
   "appId": "1268937966",
   "bundleId": "co.vulcanlabs.pictranslator",
+  "subscriptionCount": {
+    "expected": 12,
+    "actual": 10,
+    "complete": false
+  },
   "subscriptions": [
     {
       "id": 1,
@@ -22,7 +27,7 @@
     },
     {
       "id": 5,
-      "productId": "co.vulcanlabs.pictranslator.offlinelifetime1"
+      "productId": "co.vulcanlabs.pictranslator.offlineweekly1"
     },
     {
       "id": 6,
@@ -45,5 +50,5 @@
       "productId": "co.vulcanlabs.pictranslator.weekly5"
     }
   ],
-  "updatedAt": "2025-03-26T02:14:39.334Z"
+  "updatedAt": "2025-03-26T04:17:08.663Z"
 }
