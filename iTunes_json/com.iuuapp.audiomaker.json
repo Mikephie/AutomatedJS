@@ -1,0 +1,37 @@
+{
+  "name": "Audio Editor - Music editor",
+  "appStoreLink": "https://apps.apple.com/my/app/audio-editor-music…",
+  "appId": "1493256837",
+  "bundleId": "com.iuuapp.audiomaker",
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "com.iuuapp.audiomaker.removeads.year"
+    },
+    {
+      "id": 2,
+      "productId": "com.iuuapp.audiomaker.removeads.month"
+    },
+    {
+      "id": 3,
+      "productId": "com.iuuapp.audiomaker.removeads"
+    },
+    {
+      "id": 4,
+      "productId": "com.iuuapp.audiomaker.cloud.month"
+    },
+    {
+      "id": 5,
+      "productId": "com.iuuapp.audiomaker.cloud.year"
+    },
+    {
+      "id": 6,
+      "productId": "com.iuuapp.audiomaker.cloud.season"
+    },
+    {
+      "id": 7,
+      "productId": "com.iuuapp.audiomaker.removeads.year"
+    }
+  ],
+  "updatedAt": "2025-03-26T00:13:14.722Z"
+}
