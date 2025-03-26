@@ -5,7 +5,7 @@
   "bundleId": "com.xiaoqi.yinzhang",
   "subscriptionCount": {
     "expected": 2,
-    "actual": 2,
+    "actual": 3,
     "complete": true
   },
   "subscriptions": [
@@ -16,7 +16,11 @@
     {
       "id": 2,
       "productId": "com.xiaoqi.seal.weekly"
+    },
+    {
+      "id": 3,
+      "productId": "com.xiaoqi.seal.forever"
     }
   ],
-  "updatedAt": "2025-03-26T07:24:32.367Z"
+  "updatedAt": "2025-03-26T07:28:41.451Z"
 }
