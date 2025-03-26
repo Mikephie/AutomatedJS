@@ -4,10 +4,10 @@
   "appId": "6740474389",
   "bundleId": "com.mike.Video2Photo",
   "subscriptionCount": {
-    "expected": 2,
+    "expected": 0,
     "actual": 0,
-    "complete": false
+    "complete": true
   },
   "subscriptions": [],
-  "updatedAt": "2025-03-26T06:49:34.144Z"
+  "updatedAt": "2025-03-26T07:22:19.234Z"
 }
