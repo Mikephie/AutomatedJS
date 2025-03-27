@@ -1,6 +1,6 @@
 {
   "name": "VLLO- Video Editor, Vlog Edits",
-  "appStoreLink": "",
+  "appStoreLink": "https://apps.apple.com/my/app/ever-play-hifi-musi...",
   "appId": "952050883",
   "bundleId": "com.darinsoft.vimo",
   "subscriptions": [
@@ -22,24 +22,16 @@
     },
     {
       "id": 5,
-      "productId": "com.vimosoft.vllo.premium3_monthly_subscription"
-    },
-    {
-      "id": 6,
       "productId": "com.vimosoft.premium.monthly.subscription"
     },
     {
-      "id": 7,
-      "productId": "com.darinsoft.vimo.sticker.garden"
-    },
-    {
-      "id": 8,
+      "id": 6,
       "productId": "com.darinsoft.vimo.sticker.travel"
     },
     {
-      "id": 9,
+      "id": 7,
       "productId": "com.darinsoft.vimo.allfeatures"
     }
   ],
-  "updatedAt": "2025-03-27T10:18:22.162Z"
+  "updatedAt": "2025-03-27T10:34:09.816Z"
 }
