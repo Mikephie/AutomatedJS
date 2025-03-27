@@ -9,33 +9,33 @@
       "productId": "vip.annually.pollykann"
     },
     {
-      "id": 3,
+      "id": 2,
       "productId": "vip.3years.pollykann"
     },
     {
-      "id": 4,
+      "id": 3,
       "productId": "vip.monthly.pollykann"
     },
     {
-      "id": 5,
+      "id": 4,
       "productId": "vip.forever.pollykann"
     },
     {
-      "id": 6,
+      "id": 5,
       "productId": "point02.consumable.pollykann"
     },
     {
-      "id": 7,
+      "id": 6,
       "productId": "vip.5years.pollykann"
     },
     {
-      "id": 9,
+      "id": 7,
       "productId": "point06.consumable.pollykann"
     },
     {
-      "id": 10,
+      "id": 8,
       "productId": "point05.consumable.pollykann 22:15"
     }
   ],
-  "updatedAt": "2025-03-27T08:18:16.117Z"
+  "updatedAt": "2025-03-27T08:25:22.695Z"
 }
