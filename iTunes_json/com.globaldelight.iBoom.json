@@ -5,29 +5,29 @@
   "bundleId": "com.globaldelight.iBoom",
   "subscriptions": [
     {
-      "id": 3,
+      "id": 1,
       "productId": "com.globaldelight.iBoom1MonthPackDiscount"
     },
     {
-      "id": 4,
+      "id": 2,
       "productId": "com.globaldelight.iBoom6MonthPackDiscount"
     },
     {
-      "id": 5,
+      "id": 3,
       "productId": "com.globaldelight.iBoom1YearPackDiscount"
     },
     {
-      "id": 6,
+      "id": 4,
       "productId": "com.globaldelight.iBoom.LifetimeOfferPack"
     },
     {
-      "id": 7,
+      "id": 5,
       "productId": "com.globaldelight.iBoom1YearPackDiscount.OldUser . 8"
     },
     {
-      "id": 9,
+      "id": 6,
       "productId": "com.globaldelight.iBoom.LifetimeOfferPack60"
     }
   ],
-  "updatedAt": "2025-03-26T21:40:04.768Z"
+  "updatedAt": "2025-03-27T08:31:15.959Z"
 }
