@@ -1,13 +1,8 @@
 {
   "name": "Dual Web Chat for WhatsWA",
-  "appStoreLink": "https://apps.apple.com/my/app/dual-wa-whats-we...",
+  "appStoreLink": "",
   "appId": "1618030954",
   "bundleId": "com.seamobitech.whatsweb",
-  "subscriptionCount": {
-    "expected": 96,
-    "actual": 7,
-    "complete": false
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -38,5 +33,5 @@
       "productId": "com.seamobitech.whatsweb.yearly.trial"
     }
   ],
-  "updatedAt": "2025-03-26T04:52:28.181Z"
+  "updatedAt": "2025-03-27T21:50:01.041Z"
 }
