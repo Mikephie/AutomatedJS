@@ -3,6 +3,11 @@
   "appStoreLink": "https://apps.apple.com/my/app/ecg-analyzer-for-q...",
   "appId": "6740474389",
   "bundleId": "com.mike.Video2Photo",
-  "subscriptions": [],
-  "updatedAt": "2025-03-27T11:25:35.582Z"
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "6740474393"
+    }
+  ],
+  "updatedAt": "2025-03-27T11:33:34.714Z"
 }
