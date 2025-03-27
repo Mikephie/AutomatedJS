@@ -10,24 +10,24 @@
     },
     {
       "id": 2,
-      "productId": "com.lyrebirdstudio.facelab.iap.subscription.weekly7b 3"
+      "productId": "com.lyrebirdstudio.facelab.iap.subscription.weekly7b"
     },
     {
       "id": 3,
-      "productId": "yearly3DayFree3999"
-    },
-    {
-      "id": 4,
       "productId": "com.lyrebirdstudio.facelab.iap.subscription.weekly7c"
     },
     {
-      "id": 5,
+      "id": 4,
       "productId": "com.lyrebirdstudio.facelab.iap.subscription.weekly8b"
     },
     {
-      "id": 6,
+      "id": 5,
       "productId": "com.lyrebirdstudio.facelab.iap.subscription.yearly4e"
+    },
+    {
+      "id": 6,
+      "productId": "com.lyrebirdstudio.facelab.iap.subscription.yearly4d"
     }
   ],
-  "updatedAt": "2025-03-27T10:25:47.710Z"
+  "updatedAt": "2025-03-27T10:29:47.431Z"
 }
