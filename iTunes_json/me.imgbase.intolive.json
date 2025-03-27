@@ -3,6 +3,23 @@
   "appStoreLink": "https://apps.apple.com/my/app/youcam-enhance-p...",
   "appId": "1061859052",
   "bundleId": "me.imgbase.intolive",
-  "subscriptions": [],
-  "updatedAt": "2025-03-27T11:38:41.460Z"
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "me.imgbase.intolive.removead"
+    },
+    {
+      "id": 3,
+      "productId": "me.imgbase.intolive.proSubWeekly"
+    },
+    {
+      "id": 4,
+      "productId": "me.imgbase.intolive.proSubYearly"
+    },
+    {
+      "id": 5,
+      "productId": "me.imgbase.intolive.proSubYearly2024 13:01"
+    }
+  ],
+  "updatedAt": "2025-03-27T11:40:00.844Z"
 }
