@@ -1,13 +1,8 @@
 {
   "name": "Messenger Duo for WhatsApp",
-  "appStoreLink": "https://apps.apple.com/my/app/messenger-duo-for...",
+  "appStoreLink": "",
   "appId": "1312424138",
   "bundleId": "com.oliver.SpeechToText",
-  "subscriptionCount": {
-    "expected": 96,
-    "actual": 10,
-    "complete": false
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -47,8 +42,8 @@
     },
     {
       "id": 10,
-      "productId": "com.oliver.SpeechToText.SecondPhoneNumber3"
+      "productId": "com.oliver.SpeechToText. SecondPhoneNumber3"
     }
   ],
-  "updatedAt": "2025-03-26T04:51:45.203Z"
+  "updatedAt": "2025-03-27T22:07:57.065Z"
 }
