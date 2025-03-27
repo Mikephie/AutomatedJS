@@ -1,6 +1,6 @@
 {
   "name": "AllMyBatteries",
-  "appStoreLink": "https://apps.apple.com/my/app/prettyup-ai-body-e...",
+  "appStoreLink": "",
   "appId": "1621263412",
   "bundleId": "com.lagagggggg.MyBatteries",
   "subscriptions": [
@@ -14,8 +14,8 @@
     },
     {
       "id": 3,
-      "productId": "AllMyBatteries_Ultimate_Lite_Upgrade 22:11 1"
+      "productId": "AllMyBatteries_Ultimate_Lite_Upgrade"
     }
   ],
-  "updatedAt": "2025-03-26T21:40:04.768Z"
+  "updatedAt": "2025-03-27T08:31:15.959Z"
 }
