@@ -1,8 +1,17 @@
 {
   "name": "Pandora Track Subscriptions",
-  "appStoreLink": "https://apps.apple.com/ng/app/iscreen-widgets-th...",
+  "appStoreLink": "",
   "appId": "1470560916",
   "bundleId": "com.ziheng.OneBox",
-  "subscriptions": [],
-  "updatedAt": "2025-03-27T21:42:40.635Z"
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "com.ziheng.pandora.lifetime"
+    },
+    {
+      "id": 2,
+      "productId": "com.ziheng.pandora.yearly"
+    }
+  ],
+  "updatedAt": "2025-03-27T21:47:36.701Z"
 }
