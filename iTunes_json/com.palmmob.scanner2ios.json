@@ -1,0 +1,13 @@
+{
+  "name": "Scanner Document: PDF Scanner",
+  "appStoreLink": "https://apps.apple.com/ng/app/pandora-track-subs...",
+  "appId": "6443755247",
+  "bundleId": "com.palmmob.scanner2ios",
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "com.palmmob.scanner2ios.monthly"
+    }
+  ],
+  "updatedAt": "2025-03-27T21:42:40.635Z"
+}
