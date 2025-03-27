@@ -1,17 +1,8 @@
 {
   "name": "视频转实况inlive实况壁纸制作器极光动",
-  "appStoreLink": "",
+  "appStoreLink": "https://apps.apple.com/my/app/ecg-analyzer-for-q...",
   "appId": "6740474389",
   "bundleId": "com.mike.Video2Photo",
-  "subscriptions": [
-    {
-      "id": 1,
-      "productId": "6740474392"
-    },
-    {
-      "id": 2,
-      "productId": "6740474393"
-    }
-  ],
-  "updatedAt": "2025-03-26T12:01:19.686Z"
+  "subscriptions": [],
+  "updatedAt": "2025-03-27T10:39:47.472Z"
 }
