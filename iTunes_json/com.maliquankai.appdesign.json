@@ -6,8 +6,12 @@
   "subscriptions": [
     {
       "id": 1,
-      "productId": "com.maliquankai.appdesign"
+      "productId": "putapp522706"
+    },
+    {
+      "id": 2,
+      "productId": "Hello World"
     }
   ],
-  "updatedAt": "2025-03-27T21:50:01.040Z"
+  "updatedAt": "2025-03-27T21:55:37.174Z"
 }
