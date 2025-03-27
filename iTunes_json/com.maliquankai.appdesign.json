@@ -1,0 +1,13 @@
+{
+  "name": "PutApp for app collectors",
+  "appStoreLink": "",
+  "appId": "1456379965",
+  "bundleId": "com.maliquankai.appdesign",
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "com.maliquankai.appdesign"
+    }
+  ],
+  "updatedAt": "2025-03-27T21:50:01.040Z"
+}
