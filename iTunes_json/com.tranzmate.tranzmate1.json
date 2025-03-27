@@ -9,6 +9,10 @@
       "productId": "com.moovit.iap.remove_ads_yearly_001"
     },
     {
+      "id": 2,
+      "productId": "com.moovit.iap.remove_ads_monthly_001"
+    },
+    {
       "id": 3,
       "productId": "com.moovit.iap.moovit_plus_6M_PT1"
     },
@@ -41,5 +45,5 @@
       "productId": "com.moovit.iap.moovit_plus_6M_PT2"
     }
   ],
-  "updatedAt": "2025-03-27T10:47:23.849Z"
+  "updatedAt": "2025-03-27T10:48:15.298Z"
 }
