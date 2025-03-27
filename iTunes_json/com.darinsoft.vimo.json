@@ -6,32 +6,28 @@
   "subscriptions": [
     {
       "id": 1,
-      "productId": "com.vimosoft.vllo.premium3_weekly_subscription ·1"
-    },
-    {
-      "id": 2,
-      "productId": "com.vimosoft.vllo.premium3.annually_subscription ·2"
-    },
-    {
-      "id": 3,
       "productId": "com.vimosoft.EVERYTHING"
     },
     {
-      "id": 4,
+      "id": 2,
       "productId": "com.vimosoft.premium.annually.subscription"
     },
     {
-      "id": 5,
+      "id": 3,
+      "productId": "com.vimosoft.premium.monthly2.subscription"
+    },
+    {
+      "id": 4,
       "productId": "com.vimosoft.premium.monthly.subscription"
     },
     {
-      "id": 6,
+      "id": 5,
       "productId": "com.darinsoft.vimo.sticker.travel"
     },
     {
-      "id": 7,
+      "id": 6,
       "productId": "com.darinsoft.vimo.allfeatures"
     }
   ],
-  "updatedAt": "2025-03-27T08:38:19.600Z"
+  "updatedAt": "2025-03-27T08:41:23.030Z"
 }
