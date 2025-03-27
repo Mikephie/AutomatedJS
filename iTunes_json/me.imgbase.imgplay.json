@@ -1,13 +1,8 @@
 {
   "name": "ImgPlay: GIF Maker Meme",
-  "appStoreLink": "https://apps.apple.com/my/app/imgplay-gif-maker-...",
+  "appStoreLink": "https://apps.apple.com/my/app/intolive-live-wallpa...",
   "appId": "989843523",
   "bundleId": "me.imgbase.imgplay",
-  "subscriptionCount": {
-    "expected": 91,
-    "actual": 5,
-    "complete": false
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -15,20 +10,16 @@
     },
     {
       "id": 2,
-      "productId": "me.imgbase.imgplay.subscriptionWeekly"
-    },
-    {
-      "id": 3,
       "productId": "me.imgbase.imgplay.subscriptionYearly"
     },
     {
-      "id": 4,
+      "id": 3,
       "productId": "me.imgbase.imgplay.subscriptionMonthly"
     },
     {
-      "id": 5,
-      "productId": "me.imgbase.imgplay.proUpgradeFromLegacy"
+      "id": 4,
+      "productId": "me.imgbase.imgplay.proUpgradeFromLegacy 13:13"
     }
   ],
-  "updatedAt": "2025-03-26T05:14:35.206Z"
+  "updatedAt": "2025-03-27T11:36:03.831Z"
 }
