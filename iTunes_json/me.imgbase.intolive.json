@@ -1,13 +1,8 @@
 {
   "name": "intoLive Live Wallpapers",
-  "appStoreLink": "https://apps.apple.com/my/app/intolive-live-wallpa...",
+  "appStoreLink": "https://apps.apple.com/my/app/youcam-enhance-p...",
   "appId": "1061859052",
   "bundleId": "me.imgbase.intolive",
-  "subscriptionCount": {
-    "expected": 5,
-    "actual": 5,
-    "complete": true
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -15,20 +10,16 @@
     },
     {
       "id": 2,
-      "productId": "me.imgbase.intolive.proSubMonthly"
-    },
-    {
-      "id": 3,
       "productId": "me.imgbase.intolive.proSubWeekly"
     },
     {
-      "id": 4,
+      "id": 3,
       "productId": "me.imgbase.intolive.proSubYearly"
     },
     {
-      "id": 5,
-      "productId": "me.imgbase.intolive.proSubYearly2024"
+      "id": 4,
+      "productId": "me.imgbase.intolive.proSubYearly2024 13:01"
     }
   ],
-  "updatedAt": "2025-03-26T05:15:07.328Z"
+  "updatedAt": "2025-03-27T11:36:03.831Z"
 }
