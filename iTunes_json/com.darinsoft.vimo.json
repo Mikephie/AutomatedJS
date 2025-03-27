@@ -6,11 +6,11 @@
   "subscriptions": [
     {
       "id": 1,
-      "productId": "com.vimosoft.vllo.premium3_weekly_subscription ·1"
+      "productId": "com.vimosoft.vllo.premium3_weekly_subscription"
     },
     {
       "id": 2,
-      "productId": "com.vimosoft.vllo.premium3.annually_subscription ·2"
+      "productId": "com.vimosoft.vllo.premium3.annually_subscription"
     },
     {
       "id": 3,
@@ -22,7 +22,7 @@
     },
     {
       "id": 5,
-      "productId": "com.vimosoft.vllo.premium3_monthly_subscription .6"
+      "productId": "com.vimosoft.vllo.premium3_monthly_subscription"
     },
     {
       "id": 6,
@@ -41,5 +41,5 @@
       "productId": "com.darinsoft.vimo.allfeatures"
     }
   ],
-  "updatedAt": "2025-03-27T08:59:23.160Z"
+  "updatedAt": "2025-03-27T10:18:22.162Z"
 }
