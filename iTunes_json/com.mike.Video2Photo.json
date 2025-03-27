@@ -3,6 +3,15 @@
   "appStoreLink": "",
   "appId": "6740474389",
   "bundleId": "com.mike.Video2Photo",
-  "subscriptions": [],
-  "updatedAt": "2025-03-27T21:10:58.790Z"
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "6740474392"
+    },
+    {
+      "id": 2,
+      "productId": "6740474393"
+    }
+  ],
+  "updatedAt": "2025-03-27T21:12:56.432Z"
 }
