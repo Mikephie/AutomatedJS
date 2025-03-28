@@ -6,24 +6,20 @@
   "subscriptions": [
     {
       "id": 1,
-      "productId": "com.idealityapp.VideoEditing"
-    },
-    {
-      "id": 2,
       "productId": "MagicVideoSubscribeOneMonth"
     },
     {
-      "id": 3,
+      "id": 2,
       "productId": "MagicVideo_Vip_Permanent"
     },
     {
-      "id": 4,
+      "id": 3,
       "productId": "MagicVideoSubscribeThreeMonth"
     },
     {
-      "id": 5,
+      "id": 4,
       "productId": "MagicVideo_Subscribe_OneMonth"
     }
   ],
-  "updatedAt": "2025-03-28T07:10:02.339Z"
+  "updatedAt": "2025-03-28T07:17:11.853Z"
 }
