@@ -3,6 +3,27 @@
   "appStoreLink": "",
   "appId": "1462720026",
   "bundleId": "com.idealityapp.VideoEditing",
-  "subscriptions": [],
-  "updatedAt": "2025-03-28T05:37:54.438Z"
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "com.idealityapp.VideoEditing"
+    },
+    {
+      "id": 2,
+      "productId": "MagicVideoSubscribeOneMonth"
+    },
+    {
+      "id": 3,
+      "productId": "MagicVideo_Vip_Permanent"
+    },
+    {
+      "id": 4,
+      "productId": "MagicVideoSubscribeThreeMonth"
+    },
+    {
+      "id": 5,
+      "productId": "MagicVideo_Subscribe_OneMonth"
+    }
+  ],
+  "updatedAt": "2025-03-28T07:10:02.339Z"
 }
