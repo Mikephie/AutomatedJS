@@ -6,32 +6,36 @@
   "subscriptions": [
     {
       "id": 1,
-      "productId": "com.printage.charmix.yearly"
+      "productId": "com.printage.charmix"
     },
     {
       "id": 2,
-      "productId": "com.printage.charmix.monthly"
+      "productId": "com.printage.charmix.yearly"
     },
     {
       "id": 3,
-      "productId": "com.printage.charmix.yearly_free0"
+      "productId": "com.printage.charmix.monthly"
     },
     {
       "id": 4,
-      "productId": "com.printage.charmix.avatar"
+      "productId": "com.printage.charmix.yearly_free0"
     },
     {
       "id": 5,
-      "productId": "com.printage.charmix.sticker"
+      "productId": "com.printage.charmix.avatar"
     },
     {
       "id": 6,
-      "productId": "com.printage.charmix.sticker2"
+      "productId": "com.printage.charmix.sticker"
     },
     {
       "id": 7,
+      "productId": "com.printage.charmix.sticker2"
+    },
+    {
+      "id": 8,
       "productId": "com.printage.charmix.avatar2"
     }
   ],
-  "updatedAt": "2025-03-28T05:37:54.439Z"
+  "updatedAt": "2025-03-28T07:10:02.339Z"
 }
