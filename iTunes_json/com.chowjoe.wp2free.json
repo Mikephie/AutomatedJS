@@ -1,13 +1,8 @@
 {
   "name": "Wallpapers -Selected HD Images",
-  "appStoreLink": "https://apps.apple.com/my/app/wallpapers-selecte...",
+  "appStoreLink": "",
   "appId": "953753168",
   "bundleId": "com.chowjoe.wp2free",
-  "subscriptionCount": {
-    "expected": 10,
-    "actual": 10,
-    "complete": true
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -50,5 +45,5 @@
       "productId": "com.chowjoe.wp2free.year"
     }
   ],
-  "updatedAt": "2025-03-26T04:17:50.945Z"
+  "updatedAt": "2025-03-28T00:43:55.726Z"
 }
