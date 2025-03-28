@@ -3,6 +3,15 @@
   "appStoreLink": "",
   "appId": "6741813954",
   "bundleId": "com.leepfm.LivePo",
-  "subscriptions": [],
-  "updatedAt": "2025-03-28T05:37:54.438Z"
+  "subscriptions": [
+    {
+      "id": 1,
+      "productId": "com.leepfm.LivePo"
+    },
+    {
+      "id": 2,
+      "productId": "livepo_lifetime_pro"
+    }
+  ],
+  "updatedAt": "2025-03-28T07:10:02.339Z"
 }
