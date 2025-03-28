@@ -1,13 +1,8 @@
 {
   "name": "Audio Editor Music editor",
-  "appStoreLink": "https://apps.apple.com/my/app/audio-editor-music...",
+  "appStoreLink": "",
   "appId": "1493256837",
   "bundleId": "com.iuuapp.audiomaker",
-  "subscriptionCount": {
-    "expected": 7,
-    "actual": 6,
-    "complete": false
-  },
   "subscriptions": [
     {
       "id": 1,
@@ -34,5 +29,5 @@
       "productId": "com.iuuapp.audiomaker.cloud.season"
     }
   ],
-  "updatedAt": "2025-03-26T04:18:19.239Z"
+  "updatedAt": "2025-03-28T00:43:55.726Z"
 }
