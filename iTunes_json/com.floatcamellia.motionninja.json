@@ -14,7 +14,7 @@
     },
     {
       "id": 3,
-      "productId": "com.floatcamellia.motionninja.monthly"
+      "productId": "com.floatcamellia.motionninja.yearvip"
     },
     {
       "id": 4,
@@ -35,10 +35,6 @@
     {
       "id": 8,
       "productId": "com.floatcamellia.motionninja.onetimepurchase"
-    },
-    {
-      "id": 9,
-      "productId": "com.floatcamellia.motionninja.yearvip"
     }
   ],
   "updatedAt": "2025-03-29T05:22:30.705Z"
