@@ -10,15 +10,11 @@
     },
     {
       "id": 2,
-      "productId": "com.floatcamellia.hfrslowmotion.yearlywithtrial"
+      "productId": "com.floatcamellia.hfrslowmotion.yearly"
     },
     {
       "id": 3,
       "productId": "com.floatcamellia.hfrslowmotion.forevervip"
-    },
-    {
-      "id": 4,
-      "productId": "com.floatcamellia.hfrslowmotion.yearly"
     }
   ],
   "updatedAt": "2025-03-28T08:00:51.927Z"
