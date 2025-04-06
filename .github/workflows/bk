@@ -1,0 +1,305 @@
+name: Separated Rules Converter
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract-and-convert:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Create directories
+        run: mkdir -p Surge Loon
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Determine folder name
+        id: folders
+        run: |
+          # Check which folder exists and set it as a variable
+          if [ -d "QuantumultX" ]; then
+            echo "QX_FOLDER=QuantumultX" >> $GITHUB_OUTPUT
+            echo "Using folder: QuantumultX"
+          elif [ -d "QuantumultxX" ]; then
+            echo "QX_FOLDER=QuantumultxX" >> $GITHUB_OUTPUT
+            echo "Using folder: QuantumultxX"
+          else
+            # List directories to help troubleshoot
+            echo "Available directories:"
+            ls -la
+            echo "QX_FOLDER=QuantumultX" >> $GITHUB_OUTPUT
+            echo "WARNING: Neither folder found, defaulting to QuantumultX"
+          fi
+      
+      - name: Create separated rules converter script
+        run: |
+          cat > extract_separated_rules.py << 'EOF'
+          import os
+          import re
+          import sys
+          
+          def extract_info(file_path):
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as file:
+                      content = file.read()
+                  
+                  # Get filename without extension
+                  filename = os.path.basename(file_path).replace('.js', '')
+                  
+                  # Extract script name (line after 📜)
+                  script_name = filename
+                  name_match = re.search(r'📜\s*(.*?)[\n\r]', content, re.DOTALL)
+                  if name_match:
+                      script_name = name_match.group(1).strip()
+                  
+                  # Extract metadata directly from source
+                  desc = "模块"
+                  desc_match = re.search(r'#!desc\s*=\s*(.*?)[\n\r]', content)
+                  if desc_match:
+                      desc = desc_match.group(1).strip()
+                  
+                  category = "🔐APP"
+                  category_match = re.search(r'#!category\s*=\s*(.*?)[\n\r]', content)
+                  if category_match:
+                      category = category_match.group(1).strip()
+                  
+                  author = "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ"
+                  author_match = re.search(r'#!author\s*=\s*(.*?)[\n\r]', content)
+                  if author_match:
+                      author = author_match.group(1).strip()
+                  
+                  icon = f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{filename}.png"
+                  icon_match = re.search(r'#!icon\s*=\s*(.*?)[\n\r]', content)
+                  if icon_match:
+                      icon = icon_match.group(1).strip()
+                  
+                  # Extract URL pattern for script-response-body
+                  url_pattern = "^https?://example.com/"
+                  
+                  # Find script-response-body block
+                  rewrite_section = re.search(r'\[rewrite_local\](.*?)(\[|$)', content, re.DOTALL | re.IGNORECASE)
+                  response_pattern_match = None
+                  
+                  if rewrite_section:
+                      section_content = rewrite_section.group(1)
+                      
+                      # Find script-response-body line
+                      response_pattern_match = re.search(r'^([^\s]+)\s+url\s+script-response-body', section_content, re.MULTILINE)
+                      if response_pattern_match:
+                          url_pattern = response_pattern_match.group(1).strip()
+                  
+                  # Extract original script path
+                  script_path = f"{filename}.js"
+                  script_path_match = re.search(r'script-response-body\s+(https?:\/\/[^\s\n]+)', content)
+                  if script_path_match:
+                      full_path = script_path_match.group(1).strip()
+                      script_path = os.path.basename(full_path)
+                  
+                  # Extract hostname
+                  hostname = "example.com"
+                  hostname_match = re.search(r'hostname\s*=\s*(.*?)[\n\r]', content)
+                  if hostname_match:
+                      hostname = hostname_match.group(1).strip()
+                  
+                  # Extract reject rules from rewrite_local
+                  rewrite_reject_rules = []
+                  if rewrite_section:
+                      section_content = rewrite_section.group(1)
+                      for line in section_content.split('\n'):
+                          if 'reject' in line.lower() and not 'script' in line.lower():
+                              parts = line.strip().split()
+                              if len(parts) >= 2 and parts[0] and 'reject' in line.lower():
+                                  if parts[0] != url_pattern:  # Skip the script-response-body URL
+                                      rewrite_reject_rules.append(parts[0])
+                  
+                  # Extract filter rules from filter_local
+                  filter_rules = []
+                  filter_section = re.search(r'\[filter_local\](.*?)(\[|$)', content, re.DOTALL | re.IGNORECASE)
+                  if filter_section:
+                      section_content = filter_section.group(1)
+                      for line in section_content.split('\n'):
+                          if 'reject' in line.lower():
+                              # Handle url-regex format
+                              url_regex_match = re.search(r'(url-regex)\s*,\s*(.*?)\s*,\s*(reject)', line, re.IGNORECASE)
+                              if url_regex_match:
+                                  rule_type = url_regex_match.group(1).upper()
+                                  pattern = url_regex_match.group(2).strip()
+                                  action = url_regex_match.group(3).upper()
+                                  filter_rules.append((rule_type, pattern, action))
+                              else:
+                                  # Try other formats
+                                  parts = line.strip().split(',')
+                                  if len(parts) >= 3 and 'reject' in parts[-1].lower():
+                                      rule_type = parts[0].strip().upper()
+                                      pattern = parts[1].strip()
+                                      action = parts[2].strip().upper()
+                                      filter_rules.append((rule_type, pattern, action))
+                  
+                  return {
+                      'filename': filename,
+                      'script_name': script_name,
+                      'desc': desc,
+                      'category': category,
+                      'author': author,
+                      'icon': icon,
+                      'url_pattern': url_pattern,
+                      'hostname': hostname,
+                      'script_path': script_path,
+                      'rewrite_reject_rules': rewrite_reject_rules,
+                      'filter_rules': filter_rules
+                  }
+              except Exception as e:
+                  print(f"Error processing {file_path}: {str(e)}", file=sys.stderr)
+                  return {
+                      'filename': os.path.basename(file_path).replace('.js', ''),
+                      'script_name': os.path.basename(file_path).replace('.js', ''),
+                      'desc': "模块",
+                      'category': "🔐APP",
+                      'author': "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ",
+                      'icon': f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{os.path.basename(file_path).replace('.js', '')}.png",
+                      'url_pattern': "^https?://example.com/",
+                      'hostname': "example.com",
+                      'script_path': os.path.basename(file_path),
+                      'rewrite_reject_rules': [],
+                      'filter_rules': []
+                  }
+          
+          def create_loon_template(info):
+              template = f"""#!name = {info['script_name']}
+          #!desc={info['desc']}
+          #!category={info['category']}
+          #!author={info['author']}
+          #!icon={info['icon']}
+          """
+              
+              # Add Rule section for filter rules
+              if info['filter_rules']:
+                  template += "\n[Rule]"
+                  for rule_type, pattern, action in info['filter_rules']:
+                      template += f"\n{rule_type},{pattern},{action}"
+                  template += "\n"
+              
+              # Add Rewrite section for rewrite reject rules
+              if info['rewrite_reject_rules']:
+                  template += "\n[Rewrite]"
+                  for rule in info['rewrite_reject_rules']:
+                      template += f"\n{rule} reject"
+                  template += "\n"
+              
+              # Add Script section
+              template += f"\n[Script]\nhttp-response {info['url_pattern']} script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/{info['script_path']}, requires-body=true, timeout=60, tag={info['filename']}"
+              
+              # Add MITM section
+              template += f"\n\n[MITM]\nhostname = {info['hostname']}"
+              
+              return template
+          
+          def create_surge_template(info):
+              template = f"""#!name = {info['script_name']}
+          #!desc={info['desc']}
+          #!category={info['category']}
+          #!author={info['author']}
+          """
+              
+              # Add Rule section for filter rules
+              if info['filter_rules']:
+                  template += "\n[Rule]"
+                  for rule_type, pattern, action in info['filter_rules']:
+                      template += f"\n{rule_type},{pattern},{action}"
+                  template += "\n"
+              
+              # Add URL Rewrite section for rewrite reject rules
+              if info['rewrite_reject_rules']:
+                  template += "\n[URL Rewrite]"
+                  for rule in info['rewrite_reject_rules']:
+                      template += f"\n{rule} - reject"
+                  template += "\n"
+              
+              # Add Script section
+              template += f"\n[Script]\n{info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/{info['script_path']}, requires-body=true, max-size=-1, timeout=60"
+              
+              # Add MITM section
+              template += f"\n\n[MITM]\nhostname = %APPEND% {info['hostname']}"
+              
+              return template
+          
+          def main():
+              if len(sys.argv) < 2:
+                  print("Usage: python extract_separated_rules.py <qx_script_file>")
+                  sys.exit(1)
+              
+              file_path = sys.argv[1]
+              info = extract_info(file_path)
+              
+              # Print info for debugging
+              print(f"Extracted info for {info['filename']}:")
+              print(f"  Script name: {info['script_name']}")
+              print(f"  Description: {info['desc']}")
+              print(f"  Category: {info['category']}")
+              print(f"  Author: {info['author']}")
+              print(f"  Icon: {info['icon']}")
+              print(f"  URL pattern: {info['url_pattern']}")
+              print(f"  Script path: {info['script_path']}")
+              print(f"  Hostname: {info['hostname']}")
+              print(f"  Rewrite reject rules: {', '.join(info['rewrite_reject_rules']) if info['rewrite_reject_rules'] else 'None'}")
+              print(f"  Filter rules: {', '.join([f'{r[0]},{r[1]},{r[2]}' for r in info['filter_rules']]) if info['filter_rules'] else 'None'}")
+              
+              # Create templates
+              loon_content = create_loon_template(info)
+              surge_content = create_surge_template(info)
+              
+              # Write to files
+              loon_path = f"Loon/{info['filename']}.plugin"
+              surge_path = f"Surge/{info['filename']}.sgmodule"
+              
+              with open(loon_path, 'w', encoding='utf-8') as file:
+                  file.write(loon_content)
+              
+              with open(surge_path, 'w', encoding='utf-8') as file:
+                  file.write(surge_content)
+              
+              print(f"Created templates: {loon_path} and {surge_path}")
+          
+          if __name__ == "__main__":
+              main()
+          EOF
+      
+      - name: Process scripts
+        run: |
+          # Use the determined folder name
+          QX_FOLDER="${{ steps.folders.outputs.QX_FOLDER }}"
+          echo "Using folder: $QX_FOLDER"
+          
+          # List all files in the folder for debugging
+          echo "Files in $QX_FOLDER:"
+          ls -la "$QX_FOLDER" || echo "Cannot list files in $QX_FOLDER"
+          
+          # Process each JS file in the folder
+          for file in "$QX_FOLDER"/*.js; do
+            if [ -f "$file" ]; then
+              echo "Processing $file..."
+              python extract_separated_rules.py "$file"
+            else
+              echo "Warning: No .js files found in $QX_FOLDER"
+              break
+            fi
+          done
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Surge/ Loon/
+          git diff-index --quiet HEAD || git commit -m "Auto-generate templates with separated rules" || echo "No changes to commit"
+          git push || echo "Nothing to push"
