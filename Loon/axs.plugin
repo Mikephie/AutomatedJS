@@ -1,8 +1,8 @@
 #!name = AXS Payment
-#!desc=去弹窗+主页广告
-#!category=🚫广告
-#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
-#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/axs.png
+#!desc = 去弹窗+主页广告
+#!category = 🚫广告
+#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/axs.png
 
 [Rule]
 URL-REGEX,^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace,REJECT

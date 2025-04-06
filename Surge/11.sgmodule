@@ -1,7 +1,8 @@
 #!name = AXS Payment
-#!desc=去弹窗+主页广告
-#!category=🚫广告
-#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!desc = 去弹窗+主页广告
+#!category = 🚫广告
+#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
 
 [URL Rewrite]
 ^https:\/\/m-station2\.axs\.com\.sg\/AXSMobile\/WebView\/MarketPlace - reject
