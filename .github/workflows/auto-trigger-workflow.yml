@@ -1,305 +1,474 @@
-name: Separated Rules Converter
+name: Enhanced Script Converter
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      specific_file:
+        description: '指定要转换的脚本文件路径 (留空则处理所有文件)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
 
 jobs:
-  extract-and-convert:
+  convert-scripts:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Create directories
-        run: mkdir -p Surge Loon
-      
+      - name: Create output directories
+        run: |
+          mkdir -p Surge Loon
+          
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.11'
       
-      - name: Determine folder name
+      - name: Determine QX folder
         id: folders
         run: |
-          # Check which folder exists and set it as a variable
+          # 自动检测 QuantumultX 文件夹，支持多种命名方式
           if [ -d "QuantumultX" ]; then
             echo "QX_FOLDER=QuantumultX" >> $GITHUB_OUTPUT
-            echo "Using folder: QuantumultX"
-          elif [ -d "QuantumultxX" ]; then
-            echo "QX_FOLDER=QuantumultxX" >> $GITHUB_OUTPUT
-            echo "Using folder: QuantumultxX"
+            echo "找到文件夹: QuantumultX"
+          elif [ -d "quantumultx" ]; then
+            echo "QX_FOLDER=quantumultx" >> $GITHUB_OUTPUT
+            echo "找到文件夹: quantumultx"
+          elif [ -d "quanx" ]; then
+            echo "QX_FOLDER=quanx" >> $GITHUB_OUTPUT
+            echo "找到文件夹: quanx"
           else
-            # List directories to help troubleshoot
-            echo "Available directories:"
-            ls -la
+            echo "警告: 未找到 QuantumultX 文件夹，使用默认值 QuantumultX"
             echo "QX_FOLDER=QuantumultX" >> $GITHUB_OUTPUT
-            echo "WARNING: Neither folder found, defaulting to QuantumultX"
+            # 创建一个目录以防止后续错误
+            mkdir -p QuantumultX
           fi
       
-      - name: Create separated rules converter script
+      - name: Create enhanced converter script
         run: |
-          cat > extract_separated_rules.py << 'EOF'
+          cat > enhanced_converter.py << 'EOF'
           import os
           import re
           import sys
+          from glob import glob
+          import json
           
-          def extract_info(file_path):
-              try:
-                  with open(file_path, 'r', encoding='utf-8') as file:
-                      content = file.read()
+          class ScriptConverter:
+              def __init__(self):
+                  self.github_repo = "Mikephie/AutomatedJS"
                   
-                  # Get filename without extension
-                  filename = os.path.basename(file_path).replace('.js', '')
+                  # 默认值 - 当无法提取信息时使用
+                  self.defaults = {
+                      "desc": "模块",
+                      "category": "🔐APP",
+                      "author": "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ",
+                  }
                   
-                  # Extract script name (line after 📜)
-                  script_name = filename
+                  # 保存转换过程中的统计信息
+                  self.stats = {
+                      "success": 0,
+                      "failed": 0,
+                      "skipped": 0
+                  }
+              
+              def log(self, message, level="INFO"):
+                  """统一的日志输出函数"""
+                  print(f"[{level}] {message}")
+              
+              def extract_all_info(self, file_path):
+                  """从脚本文件中提取所有需要的信息"""
+                  try:
+                      with open(file_path, 'r', encoding='utf-8') as file:
+                          content = file.read()
+                      
+                      # 获取基本文件信息
+                      filename = os.path.basename(file_path)
+                      scriptname = os.path.splitext(filename)[0]
+                      
+                      # 获取所有元数据
+                      metadata = self.extract_metadata(content, scriptname)
+                      
+                      # 提取主URL模式
+                      url_pattern = self.extract_url_pattern(content, scriptname)
+                      
+                      # 提取所有过滤规则
+                      reject_rules = self.extract_reject_rules(content)
+                      filter_rules = self.extract_filter_rules(content)
+                      
+                      # 提取 MITM 信息
+                      hostname = self.extract_hostname(content, scriptname)
+                      
+                      # 提取脚本路径
+                      script_path = self.get_script_path(content, scriptname)
+                      
+                      # 构建结果信息
+                      return {
+                          "filename": scriptname,
+                          "metadata": metadata,
+                          "url_pattern": url_pattern,
+                          "hostname": hostname,
+                          "script_path": script_path,
+                          "reject_rules": reject_rules,
+                          "filter_rules": filter_rules,
+                          "raw_content": content  # 保存原始内容以便后续分析
+                      }
+                  except Exception as e:
+                      self.log(f"处理 {file_path} 时出错: {str(e)}", "ERROR")
+                      return None
+              
+              def extract_metadata(self, content, scriptname):
+                  """提取脚本元数据 (名称、描述、类别、作者、图标)"""
+                  metadata = {
+                      "name": f"✨ {scriptname} ✨",  # 默认名称
+                      "desc": self.defaults["desc"],
+                      "category": self.defaults["category"],
+                      "author": self.defaults["author"],
+                      "icon": f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{scriptname.lower()}.png"
+                  }
+                  
+                  # 名称可能在 "📜" 后定义
                   name_match = re.search(r'📜\s*(.*?)[\n\r]', content, re.DOTALL)
                   if name_match:
-                      script_name = name_match.group(1).strip()
+                      metadata["name"] = name_match.group(1).strip()
                   
-                  # Extract metadata directly from source
-                  desc = "模块"
-                  desc_match = re.search(r'#!desc\s*=\s*(.*?)[\n\r]', content)
-                  if desc_match:
-                      desc = desc_match.group(1).strip()
+                  # 尝试直接从注释中提取元数据
+                  patterns = {
+                      "desc": r'#!desc\s*=\s*(.*?)[\n\r]',
+                      "category": r'#!category\s*=\s*(.*?)[\n\r]',
+                      "author": r'#!author\s*=\s*(.*?)[\n\r]',
+                      "icon": r'#!icon\s*=\s*(.*?)[\n\r]',
+                      "name": r'#!name\s*=\s*(.*?)[\n\r]'
+                  }
                   
-                  category = "🔐APP"
-                  category_match = re.search(r'#!category\s*=\s*(.*?)[\n\r]', content)
-                  if category_match:
-                      category = category_match.group(1).strip()
+                  for key, pattern in patterns.items():
+                      match = re.search(pattern, content)
+                      if match:
+                          metadata[key] = match.group(1).strip()
                   
-                  author = "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ"
-                  author_match = re.search(r'#!author\s*=\s*(.*?)[\n\r]', content)
-                  if author_match:
-                      author = author_match.group(1).strip()
-                  
-                  icon = f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{filename}.png"
-                  icon_match = re.search(r'#!icon\s*=\s*(.*?)[\n\r]', content)
-                  if icon_match:
-                      icon = icon_match.group(1).strip()
-                  
-                  # Extract URL pattern for script-response-body
-                  url_pattern = "^https?://example.com/"
-                  
-                  # Find script-response-body block
+                  return metadata
+              
+              def extract_url_pattern(self, content, default_name):
+                  """提取主要的URL匹配模式"""
+                  # 首先检查 [rewrite_local] 部分
                   rewrite_section = re.search(r'\[rewrite_local\](.*?)(\[|$)', content, re.DOTALL | re.IGNORECASE)
-                  response_pattern_match = None
-                  
                   if rewrite_section:
                       section_content = rewrite_section.group(1)
-                      
-                      # Find script-response-body line
-                      response_pattern_match = re.search(r'^([^\s]+)\s+url\s+script-response-body', section_content, re.MULTILINE)
-                      if response_pattern_match:
-                          url_pattern = response_pattern_match.group(1).strip()
+                      # 寻找 script-response-body 行
+                      response_pattern = re.search(r'^([^\s]+)\s+url\s+script-response(-body|-header|-status)', section_content, re.MULTILINE)
+                      if response_pattern:
+                          return response_pattern.group(1).strip()
                   
-                  # Extract original script path
-                  script_path = f"{filename}.js"
-                  script_path_match = re.search(r'script-response-body\s+(https?:\/\/[^\s\n]+)', content)
-                  if script_path_match:
-                      full_path = script_path_match.group(1).strip()
-                      script_path = os.path.basename(full_path)
+                  # 如果找不到，尝试在整个文件中查找
+                  response_pattern = re.search(r'([^\s]+)\s+url\s+script-response(-body|-header|-status)', content, re.MULTILINE)
+                  if response_pattern:
+                      return response_pattern.group(1).strip()
                   
-                  # Extract hostname
-                  hostname = "example.com"
+                  return "^https?://example.com/"  # 默认值
+              
+              def extract_hostname(self, content, default_name):
+                  """提取MITM主机名"""
+                  # 检查 [mitm] 部分
+                  mitm_section = re.search(r'\[mitm\](.*?)(\[|$)', content, re.DOTALL | re.IGNORECASE)
+                  if mitm_section:
+                      section_content = mitm_section.group(1)
+                      hostname_match = re.search(r'hostname\s*=\s*(.*?)[\n\r]', section_content)
+                      if hostname_match:
+                          return hostname_match.group(1).strip()
+                  
+                  # 如果找不到，尝试在整个文件中查找
                   hostname_match = re.search(r'hostname\s*=\s*(.*?)[\n\r]', content)
                   if hostname_match:
-                      hostname = hostname_match.group(1).strip()
+                      return hostname_match.group(1).strip()
                   
-                  # Extract reject rules from rewrite_local
-                  rewrite_reject_rules = []
+                  # 提取URL主机部分作为默认主机名
+                  return self.get_hostname_from_url_pattern(self.extract_url_pattern(content, default_name))
+              
+              def get_hostname_from_url_pattern(self, url_pattern):
+                  """从URL模式中提取主机名部分"""
+                  try:
+                      # 移除正则表达式的前缀和转义
+                      cleaned_url = url_pattern.replace('^', '').replace('\\', '')
+                      
+                      # 获取主机名部分 (http(s)://example.com/)
+                      host_match = re.search(r'https?:\/\/([^\/]+)', cleaned_url)
+                      if host_match:
+                          return host_match.group(1)
+                  except:
+                      pass
+                  
+                  return "example.com"  # 默认主机名
+              
+              def extract_reject_rules(self, content):
+                  """提取拒绝规则 (来自 rewrite_local 部分)"""
+                  reject_rules = []
+                  
+                  # 检查 [rewrite_local] 部分
+                  rewrite_section = re.search(r'\[rewrite_local\](.*?)(\[|$)', content, re.DOTALL | re.IGNORECASE)
                   if rewrite_section:
                       section_content = rewrite_section.group(1)
-                      for line in section_content.split('\n'):
-                          if 'reject' in line.lower() and not 'script' in line.lower():
-                              parts = line.strip().split()
-                              if len(parts) >= 2 and parts[0] and 'reject' in line.lower():
-                                  if parts[0] != url_pattern:  # Skip the script-response-body URL
-                                      rewrite_reject_rules.append(parts[0])
+                      lines = section_content.split('\n')
+                      
+                      for line in lines:
+                          line = line.strip()
+                          # 跳过空行和注释
+                          if not line or line.startswith('#'):
+                              continue
+                          
+                          # 提取包含 reject 但不包含 script 的行
+                          if 'reject' in line.lower() and 'script' not in line.lower():
+                              parts = line.split()
+                              if len(parts) >= 2 and parts[0]:
+                                  rule_pattern = parts[0]
+                                  rule_action = 'reject'
+                                  reject_rules.append({
+                                      'pattern': rule_pattern, 
+                                      'action': rule_action
+                                  })
                   
-                  # Extract filter rules from filter_local
+                  return reject_rules
+              
+              def extract_filter_rules(self, content):
+                  """提取过滤规则 (来自 filter_local 部分)"""
                   filter_rules = []
+                  
+                  # 检查 [filter_local] 部分
                   filter_section = re.search(r'\[filter_local\](.*?)(\[|$)', content, re.DOTALL | re.IGNORECASE)
                   if filter_section:
                       section_content = filter_section.group(1)
-                      for line in section_content.split('\n'):
-                          if 'reject' in line.lower():
-                              # Handle url-regex format
-                              url_regex_match = re.search(r'(url-regex)\s*,\s*(.*?)\s*,\s*(reject)', line, re.IGNORECASE)
-                              if url_regex_match:
-                                  rule_type = url_regex_match.group(1).upper()
-                                  pattern = url_regex_match.group(2).strip()
-                                  action = url_regex_match.group(3).upper()
-                                  filter_rules.append((rule_type, pattern, action))
-                              else:
-                                  # Try other formats
-                                  parts = line.strip().split(',')
-                                  if len(parts) >= 3 and 'reject' in parts[-1].lower():
-                                      rule_type = parts[0].strip().upper()
-                                      pattern = parts[1].strip()
-                                      action = parts[2].strip().upper()
-                                      filter_rules.append((rule_type, pattern, action))
+                      lines = section_content.split('\n')
+                      
+                      for line in lines:
+                          line = line.strip()
+                          # 跳过空行和注释
+                          if not line or line.startswith('#'):
+                              continue
+                          
+                          # 处理 url-regex 格式
+                          url_regex_match = re.search(r'(url-regex),\s*(.*?)\s*,\s*(reject.*)', line, re.IGNORECASE)
+                          if url_regex_match:
+                              rule_type = url_regex_match.group(1).upper()
+                              pattern = url_regex_match.group(2).strip()
+                              action = url_regex_match.group(3).strip().upper()
+                              filter_rules.append({
+                                  'type': rule_type,
+                                  'pattern': pattern,
+                                  'action': action
+                              })
+                              continue
+                          
+                          # 处理其他格式
+                          parts = line.split(',')
+                          if len(parts) >= 3:
+                              rule_type = parts[0].strip().upper()
+                              pattern = parts[1].strip()
+                              action = parts[2].strip().upper()
+                              filter_rules.append({
+                                  'type': rule_type,
+                                  'pattern': pattern,
+                                  'action': action
+                              })
                   
-                  return {
-                      'filename': filename,
-                      'script_name': script_name,
-                      'desc': desc,
-                      'category': category,
-                      'author': author,
-                      'icon': icon,
-                      'url_pattern': url_pattern,
-                      'hostname': hostname,
-                      'script_path': script_path,
-                      'rewrite_reject_rules': rewrite_reject_rules,
-                      'filter_rules': filter_rules
-                  }
-              except Exception as e:
-                  print(f"Error processing {file_path}: {str(e)}", file=sys.stderr)
-                  return {
-                      'filename': os.path.basename(file_path).replace('.js', ''),
-                      'script_name': os.path.basename(file_path).replace('.js', ''),
-                      'desc': "模块",
-                      'category': "🔐APP",
-                      'author': "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ",
-                      'icon': f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{os.path.basename(file_path).replace('.js', '')}.png",
-                      'url_pattern': "^https?://example.com/",
-                      'hostname': "example.com",
-                      'script_path': os.path.basename(file_path),
-                      'rewrite_reject_rules': [],
-                      'filter_rules': []
-                  }
-          
-          def create_loon_template(info):
-              template = f"""#!name = {info['script_name']}
-          #!desc={info['desc']}
-          #!category={info['category']}
-          #!author={info['author']}
-          #!icon={info['icon']}
+                  return filter_rules
+              
+              def get_script_path(self, content, filename):
+                  """获取脚本路径"""
+                  # 尝试从内容中提取脚本路径
+                  script_match = re.search(r'script-response-body\s+(https?:\/\/[^\s\n]+)', content)
+                  if script_match:
+                      full_path = script_match.group(1).strip()
+                      return os.path.basename(full_path)
+                  
+                  # 如果没有指定路径，使用文件名
+                  return f"{filename}.js"
+              
+              def create_loon_config(self, info):
+                  """创建Loon配置"""
+                  metadata = info["metadata"]
+                  
+                  # 基本配置信息
+                  config = f"""#!name = {metadata["name"]}
+          #!desc = {metadata["desc"]}
+          #!category = {metadata["category"]}
+          #!author = {metadata["author"]}
+          #!icon = {metadata["icon"]}
           """
+                  
+                  # 添加过滤规则
+                  if info["filter_rules"]:
+                      config += "\n[Rule]"
+                      for rule in info["filter_rules"]:
+                          config += f"\n{rule['type']},{rule['pattern']},{rule['action']}"
+                  
+                  # 添加重写拒绝规则
+                  if info["reject_rules"]:
+                      config += "\n\n[Rewrite]"
+                      for rule in info["reject_rules"]:
+                          config += f"\n{rule['pattern']} reject"
+                  
+                  # 添加脚本部分
+                  script_path = f"https://raw.githubusercontent.com/{self.github_repo}/main/QuantumultX/{info['script_path']}"
+                  config += f"\n\n[Script]\nhttp-response {info['url_pattern']} script-path={script_path}, requires-body=true, timeout=60, tag={info['filename']}"
+                  
+                  # 添加MITM部分 (最后)
+                  config += f"\n\n[MITM]\nhostname = {info['hostname']}"
+                  
+                  return config
               
-              # Add Rule section for filter rules
-              if info['filter_rules']:
-                  template += "\n[Rule]"
-                  for rule_type, pattern, action in info['filter_rules']:
-                      template += f"\n{rule_type},{pattern},{action}"
-                  template += "\n"
-              
-              # Add Rewrite section for rewrite reject rules
-              if info['rewrite_reject_rules']:
-                  template += "\n[Rewrite]"
-                  for rule in info['rewrite_reject_rules']:
-                      template += f"\n{rule} reject"
-                  template += "\n"
-              
-              # Add Script section
-              template += f"\n[Script]\nhttp-response {info['url_pattern']} script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/{info['script_path']}, requires-body=true, timeout=60, tag={info['filename']}"
-              
-              # Add MITM section
-              template += f"\n\n[MITM]\nhostname = {info['hostname']}"
-              
-              return template
-          
-          def create_surge_template(info):
-              template = f"""#!name = {info['script_name']}
-          #!desc={info['desc']}
-          #!category={info['category']}
-          #!author={info['author']}
+              def create_surge_config(self, info):
+                  """创建Surge配置"""
+                  metadata = info["metadata"]
+                  
+                  # 基本配置信息
+                  config = f"""#!name = {metadata["name"]}
+          #!desc = {metadata["desc"]}
+          #!category = {metadata["category"]}
+          #!author = {metadata["author"]}
           """
+                  
+                  # 添加过滤规则
+                  if info["filter_rules"]:
+                      config += "\n[Rule]"
+                      for rule in info["filter_rules"]:
+                          # Surge使用URL-REGEX而不是url-regex
+                          rule_type = "URL-REGEX" if rule['type'].lower() == "url-regex" else rule['type']
+                          config += f"\n{rule_type},{rule['pattern']},{rule['action']}"
+                  
+                  # 添加重写拒绝规则
+                  if info["reject_rules"]:
+                      config += "\n\n[URL Rewrite]"
+                      for rule in info["reject_rules"]:
+                          config += f"\n{rule['pattern']} - reject"
+                  
+                  # 添加脚本部分
+                  script_path = f"https://raw.githubusercontent.com/{self.github_repo}/main/QuantumultX/{info['script_path']}"
+                  config += f"\n\n[Script]\n{info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path={script_path}, requires-body=true, max-size=-1, timeout=60"
+                  
+                  # 添加MITM部分 (最后)
+                  config += f"\n\n[MITM]\nhostname = %APPEND% {info['hostname']}"
+                  
+                  return config
               
-              # Add Rule section for filter rules
-              if info['filter_rules']:
-                  template += "\n[Rule]"
-                  for rule_type, pattern, action in info['filter_rules']:
-                      template += f"\n{rule_type},{pattern},{action}"
-                  template += "\n"
+              def process_file(self, file_path):
+                  """处理单个文件"""
+                  try:
+                      # 提取文件名
+                      filename = os.path.basename(file_path)
+                      scriptname = os.path.splitext(filename)[0]
+                      
+                      self.log(f"正在处理: {filename}")
+                      
+                      # 提取信息
+                      info = self.extract_all_info(file_path)
+                      if not info:
+                          self.log(f"无法从 {filename} 提取信息，跳过", "WARN")
+                          self.stats["skipped"] += 1
+                          return False
+                      
+                      # 创建配置
+                      loon_config = self.create_loon_config(info)
+                      surge_config = self.create_surge_config(info)
+                      
+                      # 保存文件
+                      loon_path = f"Loon/{scriptname}.plugin"
+                      surge_path = f"Surge/{scriptname}.sgmodule"
+                      
+                      with open(loon_path, 'w', encoding='utf-8') as file:
+                          file.write(loon_config)
+                      
+                      with open(surge_path, 'w', encoding='utf-8') as file:
+                          file.write(surge_config)
+                      
+                      self.log(f"成功创建: {loon_path} 和 {surge_path}")
+                      self.stats["success"] += 1
+                      return True
+                      
+                  except Exception as e:
+                      self.log(f"处理 {file_path} 时出错: {str(e)}", "ERROR")
+                      self.stats["failed"] += 1
+                      return False
               
-              # Add URL Rewrite section for rewrite reject rules
-              if info['rewrite_reject_rules']:
-                  template += "\n[URL Rewrite]"
-                  for rule in info['rewrite_reject_rules']:
-                      template += f"\n{rule} - reject"
-                  template += "\n"
-              
-              # Add Script section
-              template += f"\n[Script]\n{info['filename']} = type=http-response, pattern={info['url_pattern']}, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/{info['script_path']}, requires-body=true, max-size=-1, timeout=60"
-              
-              # Add MITM section
-              template += f"\n\n[MITM]\nhostname = %APPEND% {info['hostname']}"
-              
-              return template
+              def process_directory(self, directory, specific_file=None):
+                  """处理整个目录中的JS文件"""
+                  self.log(f"开始处理目录: {directory}")
+                  
+                  if specific_file:
+                      # 处理指定文件
+                      specific_path = os.path.join(directory, specific_file)
+                      if os.path.isfile(specific_path) and specific_path.endswith('.js'):
+                          self.process_file(specific_path)
+                      else:
+                          self.log(f"指定的文件不存在或不是JS文件: {specific_path}", "ERROR")
+                  else:
+                      # 处理所有文件
+                      js_files = glob(os.path.join(directory, "*.js"))
+                      if not js_files:
+                          self.log(f"目录中没有找到JS文件: {directory}", "WARN")
+                          return
+                      
+                      for file_path in js_files:
+                          self.process_file(file_path)
+                  
+                  # 输出统计信息
+                  self.log("\n转换统计:")
+                  self.log(f"成功: {self.stats['success']}")
+                  self.log(f"失败: {self.stats['failed']}")
+                  self.log(f"跳过: {self.stats['skipped']}")
           
           def main():
+              """主函数"""
               if len(sys.argv) < 2:
-                  print("Usage: python extract_separated_rules.py <qx_script_file>")
+                  print("用法: python enhanced_converter.py <qx_folder> [specific_file]")
                   sys.exit(1)
               
-              file_path = sys.argv[1]
-              info = extract_info(file_path)
+              qx_folder = sys.argv[1]
+              specific_file = sys.argv[2] if len(sys.argv) > 2 else None
               
-              # Print info for debugging
-              print(f"Extracted info for {info['filename']}:")
-              print(f"  Script name: {info['script_name']}")
-              print(f"  Description: {info['desc']}")
-              print(f"  Category: {info['category']}")
-              print(f"  Author: {info['author']}")
-              print(f"  Icon: {info['icon']}")
-              print(f"  URL pattern: {info['url_pattern']}")
-              print(f"  Script path: {info['script_path']}")
-              print(f"  Hostname: {info['hostname']}")
-              print(f"  Rewrite reject rules: {', '.join(info['rewrite_reject_rules']) if info['rewrite_reject_rules'] else 'None'}")
-              print(f"  Filter rules: {', '.join([f'{r[0]},{r[1]},{r[2]}' for r in info['filter_rules']]) if info['filter_rules'] else 'None'}")
+              if not os.path.isdir(qx_folder):
+                  print(f"错误: {qx_folder} 不是有效目录")
+                  sys.exit(1)
               
-              # Create templates
-              loon_content = create_loon_template(info)
-              surge_content = create_surge_template(info)
-              
-              # Write to files
-              loon_path = f"Loon/{info['filename']}.plugin"
-              surge_path = f"Surge/{info['filename']}.sgmodule"
-              
-              with open(loon_path, 'w', encoding='utf-8') as file:
-                  file.write(loon_content)
-              
-              with open(surge_path, 'w', encoding='utf-8') as file:
-                  file.write(surge_content)
-              
-              print(f"Created templates: {loon_path} and {surge_path}")
+              converter = ScriptConverter()
+              converter.process_directory(qx_folder, specific_file)
           
           if __name__ == "__main__":
               main()
           EOF
       
-      - name: Process scripts
+      - name: Run converter
         run: |
-          # Use the determined folder name
           QX_FOLDER="${{ steps.folders.outputs.QX_FOLDER }}"
-          echo "Using folder: $QX_FOLDER"
+          SPECIFIC_FILE="${{ github.event.inputs.specific_file }}"
           
-          # List all files in the folder for debugging
-          echo "Files in $QX_FOLDER:"
-          ls -la "$QX_FOLDER" || echo "Cannot list files in $QX_FOLDER"
+          echo "===== 开始脚本转换 ====="
+          echo "脚本目录: $QX_FOLDER"
           
-          # Process each JS file in the folder
-          for file in "$QX_FOLDER"/*.js; do
-            if [ -f "$file" ]; then
-              echo "Processing $file..."
-              python extract_separated_rules.py "$file"
-            else
-              echo "Warning: No .js files found in $QX_FOLDER"
-              break
-            fi
-          done
+          if [ -n "$SPECIFIC_FILE" ]; then
+            echo "指定转换文件: $SPECIFIC_FILE"
+            python enhanced_converter.py "$QX_FOLDER" "$SPECIFIC_FILE"
+          else
+            echo "转换所有脚本文件"
+            python enhanced_converter.py "$QX_FOLDER"
+          fi
       
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+          
+          # 添加所有生成的配置文件
           git add Surge/ Loon/
-          git diff-index --quiet HEAD || git commit -m "Auto-generate templates with separated rules" || echo "No changes to commit"
-          git push || echo "Nothing to push"
+          
+          # 检查是否有文件变更需要提交
+          if git diff-index --quiet HEAD; then
+            echo "没有文件变更，无需提交"
+          else
+            # 提交并推送
+            git commit -m "自动生成模块配置 [$(date +'%Y-%m-%d %H:%M:%S')]"
+            git push || echo "推送失败，可能是远程仓库变化导致"
+          fi
