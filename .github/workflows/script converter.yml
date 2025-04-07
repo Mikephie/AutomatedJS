@@ -3,33 +3,63 @@ name: Script Converter
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'QX/**/*.js'
 
+# Add this explicit permissions block
 permissions:
-  contents: write  # Make sure this is set
+  contents: write
 
 jobs:
   convert:
     runs-on: ubuntu-latest
+    # Add a concurrency group to prevent conflicts
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Get full history
+          fetch-depth: 0
       
-      # ... your processing steps ...
-      
+      - name: Create directories
+        run: mkdir -p QX Loon Surge
+          
+      - name: Create test file if needed
+        run: |
+          if [ ! -f "QX/test.js" ]; then
+            echo "/* Test Script */" > QX/test.js
+          fi
+          
+      - name: List files
+        run: ls -la QX/
+          
+      - name: Create Loon and Surge files
+        run: |
+          for file in QX/*.js; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file" .js)
+              echo "#!name = $filename" > "Loon/$filename.plugin"
+              echo "#!name = $filename" > "Surge/$filename.sgmodule"
+            fi
+          done
+          
+      - name: List generated files
+        run: find Loon Surge -type f
+          
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Loon/ Surge/
+          # Use identical condition to your original
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Auto-convert scripts"
-            git pull --rebase origin main  # Pull latest changes
+            git pull --rebase origin main
             git push
           fi
