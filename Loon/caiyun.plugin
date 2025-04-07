@@ -1,0 +1,15 @@
+#!name = 彩云天气 解锁 VIP 脚本
+#!desc = 模块
+#!category = 🔐APP
+#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/caiyun.png
+
+
+[Rewrite]
+^https:\/\/ad\.cyapi\.cn\/v2\/req\?app_name=weather reject
+
+[Script]
+http-response ^https:\/\/wrapper\.cyapi\.cn\/v1\/activity\?app_name=weather script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/caiyun.js, requires-body=true, timeout=60, tag=caiyun
+
+[MITM]
+hostname = *.cyapi.cn
