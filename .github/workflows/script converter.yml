@@ -1,0 +1,46 @@
+name: Script Converter
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'QX/**/*.js'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Create directories
+        run: mkdir -p QX Loon Surge
+          
+      - name: Create test file if needed
+        run: |
+          if [ ! -f "QX/test.js" ]; then
+            echo "/* Test Script */" > QX/test.js
+          fi
+          
+      - name: List files
+        run: ls -la QX/
+          
+      - name: Create Loon and Surge files
+        run: |
+          for file in QX/*.js; do
+            filename=$(basename "$file" .js)
+            echo "#!name = $filename" > "Loon/$filename.plugin"
+            echo "#!name = $filename" > "Surge/$filename.sgmodule"
+          done
+          
+      - name: List generated files
+        run: find Loon Surge -type f
+          
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Loon/ Surge/
+          git commit -m "Auto-convert scripts" || echo "No changes to commit"
+          git push || echo "Nothing to push"
