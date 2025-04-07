@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Get full history
       
       - name: Create directories
         run: mkdir -p QX Loon Surge
@@ -42,5 +44,10 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add Loon/ Surge/
-          git commit -m "Auto-convert scripts" || echo "No changes to commit"
-          git push || echo "Nothing to push"
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-convert scripts"
+            git pull --rebase origin main  # Pull latest changes
+            git push
+          fi
