@@ -8,12 +8,12 @@ import logging
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler()
     ]
 )
-logger = logging.getLogger('script_converter')
+logger = logging.getLogger("script_converter")
 
 class ScriptConverter:
     def __init__(self):
@@ -46,7 +46,7 @@ class ScriptConverter:
     
     def extract_script_content(self, content):
         """Extract content from comment block"""
-        comment_match = re.search(r'/\*([\s\S]*?)\*/', content)
+        comment_match = re.search(r"/\*([\s\S]*?)\*/", content)
         if comment_match:
             return comment_match.group(1).strip()
         return content
@@ -56,11 +56,11 @@ class ScriptConverter:
         try:
             # First try UTF-8 encoding
             try:
-                with open(file_path, 'r', encoding='utf-8') as file:
+                with open(file_path, "r", encoding="utf-8") as file:
                     content = file.read()
             except UnicodeDecodeError:
                 # Fall back to another encoding if UTF-8 fails
-                with open(file_path, 'r', encoding='latin-1') as file:
+                with open(file_path, "r", encoding="latin-1") as file:
                     content = file.read()
             
             # Process comment block
@@ -103,15 +103,15 @@ class ScriptConverter:
         """Extract all sections including comments"""
         # Try to extract Loon format sections
         loon_sections = {
-            "Rule": re.search(r'\[Rule\]([\s\S]*?)(?=\[|$)', content, re.IGNORECASE),
-            "Rewrite": re.search(r'\[Rewrite\]([\s\S]*?)(?=\[|$)', content, re.IGNORECASE),
-            "Script": re.search(r'\[Script\]([\s\S]*?)(?=\[|$)', content, re.IGNORECASE)
+            "Rule": re.search(r"\[Rule\]([\s\S]*?)(?=\[|$)", content, re.IGNORECASE),
+            "Rewrite": re.search(r"\[Rewrite\]([\s\S]*?)(?=\[|$)", content, re.IGNORECASE),
+            "Script": re.search(r"\[Script\]([\s\S]*?)(?=\[|$)", content, re.IGNORECASE)
         }
         
         # Try to extract QX format sections
         qx_sections = {
-            "filter_local": re.search(r'\[filter_local\]([\s\S]*?)(?=\[|$)', content, re.IGNORECASE),
-            "rewrite_local": re.search(r'\[rewrite_local\]([\s\S]*?)(?=\[|$)', content, re.IGNORECASE)
+            "filter_local": re.search(r"\[filter_local\]([\s\S]*?)(?=\[|$)", content, re.IGNORECASE),
+            "rewrite_local": re.search(r"\[rewrite_local\]([\s\S]*?)(?=\[|$)", content, re.IGNORECASE)
         }
         
         # Process Loon format
@@ -133,7 +133,7 @@ class ScriptConverter:
     
     def parse_section_with_comments(self, section_content, target_array):
         """Parse section content, preserving comments"""
-        lines = section_content.split('\n')
+        lines = section_content.split("\n")
         current_comment = ""
         
         for line in lines:
@@ -141,7 +141,7 @@ class ScriptConverter:
             if not line:
                 continue
             
-            if line.startswith('#'):
+            if line.startswith("#"):
                 # Collect comment
                 current_comment = line
             else:
@@ -162,18 +162,18 @@ class ScriptConverter:
             content = rule["content"]
             
             # Convert format
-            if content.startswith('host,'):
-                parts = content.split(',')
+            if content.startswith("host,"):
+                parts = content.split(",")
                 if len(parts) >= 3:
                     result["rules"][i]["content"] = f"DOMAIN,{parts[1]},{parts[2]}"
-            elif content.startswith('url-regex,'):
-                parts = content.split(',')
+            elif content.startswith("url-regex,"):
+                parts = content.split(",")
                 if len(parts) >= 3:
                     result["rules"][i]["content"] = f"URL-REGEX,{parts[1]},{parts[2]}"
     
     def parse_qx_rewrite(self, rewrite_content, result):
         """Parse QX rewrite rules, split between Loon Rewrite and Script sections"""
-        lines = rewrite_content.split('\n')
+        lines = rewrite_content.split("\n")
         current_comment = ""
         
         for line in lines:
@@ -181,23 +181,23 @@ class ScriptConverter:
             if not line:
                 continue
             
-            if line.startswith('#'):
+            if line.startswith("#"):
                 # Collect comment
                 current_comment = line
-            elif ' url ' in line:
-                parts = line.split(' url ')
+            elif " url " in line:
+                parts = line.split(" url ")
                 pattern = parts[0].strip()
                 action = parts[1].strip()
                 
-                if action.startswith('reject'):
+                if action.startswith("reject"):
                     # reject rules go to Rewrite
                     result["rewrites"].append({
                         "content": f"{pattern} - {action}",
                         "comment": current_comment
                     })
-                elif action.startswith('script-'):
+                elif action.startswith("script-"):
                     # script rules go to Script
-                    script_parts = action.split(' ')
+                    script_parts = action.split(" ")
                     if len(script_parts) >= 2:
                         script_type = script_parts[0]
                         script_path = script_parts[1]
@@ -208,8 +208,8 @@ class ScriptConverter:
                         
                         # Extract script name for tag
                         tag = result["metadata"]["name"]
-                        if script_path and '/' in script_path:
-                            script_name = script_path.split('/')[-1].split('.')[0]
+                        if script_path and "/" in script_path:
+                            script_name = script_path.split("/")[-1].split(".")[0]
                             if script_name:
                                 tag = script_name
                         
@@ -233,11 +233,11 @@ class ScriptConverter:
         
         # Extract metadata from comments
         patterns = {
-            "name": r'#!name\s*=\s*(.*?)[\n\r]',
-            "desc": r'#!desc\s*=\s*(.*?)[\n\r]',
-            "category": r'#!category\s*=\s*(.*?)[\n\r]',
-            "author": r'#!author\s*=\s*(.*?)[\n\r]',
-            "icon": r'#!icon\s*=\s*(.*?)[\n\r]'
+            "name": r"#!name\s*=\s*(.*?)[\n\r]",
+            "desc": r"#!desc\s*=\s*(.*?)[\n\r]",
+            "category": r"#!category\s*=\s*(.*?)[\n\r]",
+            "author": r"#!author\s*=\s*(.*?)[\n\r]",
+            "icon": r"#!icon\s*=\s*(.*?)[\n\r]"
         }
         
         for key, pattern in patterns.items():
@@ -247,12 +247,12 @@ class ScriptConverter:
         
         # Try to guess name from content
         if metadata["name"] == scriptname:
-            name_match = re.search(r'📜\s*(.*?)[\n\r]', content)
+            name_match = re.search(r"📜\s*(.*?)[\n\r]", content)
             if name_match:
                 metadata["name"] = name_match.group(1).strip()
             else:
                 # Try to guess from content
-                for name_pattern in [r'彩云天气|caiyun|AXS Payment|([^\n]+脚本)']:
+                for name_pattern in [r"彩云天气|caiyun|AXS Payment|([^\n]+脚本)"]:
                     title_match = re.search(name_pattern, content, re.IGNORECASE)
                     if title_match:
                         metadata["name"] = title_match.group(0).strip()
@@ -263,24 +263,24 @@ class ScriptConverter:
     def extract_hostname(self, content):
         """Extract MITM hostname"""
         # Extract from [MITM] or [mitm] section
-        mitm_match = re.search(r'\[(MITM|mitm)\]([\s\S]*?)(?=\[|$)', content)
+        mitm_match = re.search(r"\[(MITM|mitm)\]([\s\S]*?)(?=\[|$)", content)
         if mitm_match:
-            hostname_match = re.search(r'hostname\s*=\s*([^\n\r]+)', mitm_match.group(2))
+            hostname_match = re.search(r"hostname\s*=\s*([^\n\r]+)", mitm_match.group(2))
             if hostname_match:
                 return hostname_match.group(1).strip()
         
         # Extract from whole content
-        hostname_match = re.search(r'hostname\s*=\s*([^\n\r]+)', content)
+        hostname_match = re.search(r"hostname\s*=\s*([^\n\r]+)", content)
         if hostname_match:
             return hostname_match.group(1).strip()
         
         # Try to extract domain from rules
-        domain_match = re.search(r'https?:\/\/([^\/\s]+)', content)
+        domain_match = re.search(r"https?:\/\/([^\/\s]+)", content)
         if domain_match:
-            domain = domain_match.group(1).replace('\\', '')
+            domain = domain_match.group(1).replace("\\", "")
             # If subdomain, convert to wildcard form
-            if domain.count('.') > 1:
-                parts = domain.split('.')
+            if domain.count(".") > 1:
+                parts = domain.split(".")
                 return f"*.{parts[-2]}.{parts[-1]}"
             return domain
         
@@ -366,7 +366,7 @@ class ScriptConverter:
                 config += f"\n{rule['content']}"
         
         # Add Map Local section (for reject rules)
-        reject_rules = [r for r in info["rewrites"] if ' - reject' in r["content"]]
+        reject_rules = [r for r in info["rewrites"] if " - reject" in r["content"]]
         if reject_rules:
             config += "\n\n[Map Local]"
             last_comment = ""
@@ -378,7 +378,7 @@ class ScriptConverter:
                     last_comment = rule["comment"]
                 
                 # Extract pattern and reject type
-                parts = rule["content"].split(' - ')
+                parts = rule["content"].split(" - ")
                 pattern = parts[0]
                 reject_type = parts[1] if len(parts) > 1 else "reject"
                 
@@ -407,10 +407,10 @@ class ScriptConverter:
                 
                 # Parse Loon script rule
                 loon_script = script["content"]
-                match = re.search(r'(http-(?:response|request))\s+([^\s]+)\s+script-path=([^,]+)', loon_script)
+                match = re.search(r"(http-(?:response|request))\s+([^\s]+)\s+script-path=([^,]+)", loon_script)
                 
                 if match:
-                    http_type = match.group(1).replace('http-', '')
+                    http_type = match.group(1).replace("http-", "")
                     pattern = match.group(2)
                     script_path = match.group(3)
                     
@@ -458,10 +458,10 @@ class ScriptConverter:
             loon_path = f"Loon/{scriptname}.plugin"
             surge_path = f"Surge/{scriptname}.sgmodule"
             
-            with open(loon_path, 'w', encoding='utf-8') as file:
+            with open(loon_path, "w", encoding="utf-8") as file:
                 file.write(loon_config)
             
-            with open(surge_path, 'w', encoding='utf-8') as file:
+            with open(surge_path, "w", encoding="utf-8") as file:
                 file.write(surge_config)
             
             self.log(f"Successfully created: {loon_path} and {surge_path}")
@@ -485,7 +485,7 @@ class ScriptConverter:
         if specific_file:
             # Process specific file
             specific_path = os.path.join(directory, specific_file)
-            if os.path.isfile(specific_path) and specific_path.endswith('.js'):
+            if os.path.isfile(specific_path) and specific_path.endswith(".js"):
                 self.process_file(specific_path)
             else:
                 self.log(f"Specified file doesn't exist or isn't a JS file: {specific_path}", "ERROR")
