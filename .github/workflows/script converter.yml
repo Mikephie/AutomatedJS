@@ -7,6 +7,9 @@ on:
     paths:
       - 'QX/**/*.js'
 
+permissions:
+  contents: write  # Make sure this is set
+
 jobs:
   convert:
     runs-on: ubuntu-latest
@@ -16,29 +19,8 @@ jobs:
         with:
           fetch-depth: 0  # Get full history
       
-      - name: Create directories
-        run: mkdir -p QX Loon Surge
-          
-      - name: Create test file if needed
-        run: |
-          if [ ! -f "QX/test.js" ]; then
-            echo "/* Test Script */" > QX/test.js
-          fi
-          
-      - name: List files
-        run: ls -la QX/
-          
-      - name: Create Loon and Surge files
-        run: |
-          for file in QX/*.js; do
-            filename=$(basename "$file" .js)
-            echo "#!name = $filename" > "Loon/$filename.plugin"
-            echo "#!name = $filename" > "Surge/$filename.sgmodule"
-          done
-          
-      - name: List generated files
-        run: find Loon Surge -type f
-          
+      # ... your processing steps ...
+      
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
