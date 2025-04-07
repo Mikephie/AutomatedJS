@@ -26,119 +26,9 @@ jobs:
       with:
         python-version: '3.10'
     
-    - name: Debug file system
-      run: |
-        pwd
-        ls -la
-        echo "Current directory contents:"
-        find . -type f -name "*.py" | sort
-    
     - name: Download script_converter.py
       run: |
-        curl -o script_converter.py https://raw.githubusercontent.com/Mikephie/AutomatedJS/script-converter/script_converter.py || \
-        wget -O script_converter.py https://raw.githubusercontent.com/Mikephie/AutomatedJS/script-converter/script_converter.py || \
-        (echo "Failed to download script_converter.py, creating minimal version"; \
-        cat > script_converter.py << 'EOF'
-#!/usr/bin/env python3
-import os
-import re
-import sys
-from glob import glob
-
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python script_converter.py <qx_folder>")
-        sys.exit(1)
-    
-    qx_folder = sys.argv[1]
-    
-    # Ensure QX directory exists
-    if not os.path.isdir(qx_folder):
-        print(f"Error: Directory {qx_folder} does not exist")
-        sys.exit(1)
-    
-    # Create output directories
-    os.makedirs("Loon", exist_ok=True)
-    os.makedirs("Surge", exist_ok=True)
-    
-    # Find all JS files
-    js_files = glob(os.path.join(qx_folder, "*.js"))
-    
-    for file_path in js_files:
-        filename = os.path.basename(file_path)
-        scriptname = os.path.splitext(filename)[0]
-        print(f"Processing: {filename}")
-        
-        try:
-            # Read and parse file
-            with open(file_path, 'r', encoding='utf-8') as file:
-                content = file.read()
-            
-            # Extract metadata and sections
-            metadata = extract_metadata(content, scriptname)
-            
-            # Create Loon config
-            loon_config = f"""#!name = {metadata['name']}
-#!desc = {metadata['desc']}
-#!category = {metadata['category']}
-#!author = {metadata['author']}
-#!icon = {metadata['icon']}
-
-# Converted by GitHub Actions"""
-            
-            # Create Surge config  
-            surge_config = f"""#!name = {metadata['name']}
-#!desc = {metadata['desc']}
-#!category = {metadata['category']}
-#!author = {metadata['author']}
-
-# Converted by GitHub Actions"""
-            
-            # Write to files
-            with open(f"Loon/{scriptname}.plugin", 'w', encoding='utf-8') as file:
-                file.write(loon_config)
-                
-            with open(f"Surge/{scriptname}.sgmodule", 'w', encoding='utf-8') as file:
-                file.write(surge_config)
-                
-            print(f"Created Loon and Surge configs for {filename}")
-            
-        except Exception as e:
-            print(f"Error processing {filename}: {str(e)}")
-
-def extract_metadata(content, scriptname):
-    """Extract basic metadata from content"""
-    metadata = {
-        "name": scriptname,
-        "desc": "模块",
-        "category": "🔐APP",
-        "author": "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ",
-        "icon": f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{scriptname.lower()}.png"
-    }
-    
-    # Extract from comments if available
-    name_match = re.search(r'#!name\s*=\s*(.*?)[\n\r]', content)
-    if name_match:
-        metadata["name"] = name_match.group(1).strip()
-        
-    desc_match = re.search(r'#!desc\s*=\s*(.*?)[\n\r]', content)
-    if desc_match:
-        metadata["desc"] = desc_match.group(1).strip()
-        
-    category_match = re.search(r'#!category\s*=\s*(.*?)[\n\r]', content)
-    if category_match:
-        metadata["category"] = category_match.group(1).strip()
-        
-    author_match = re.search(r'#!author\s*=\s*(.*?)[\n\r]', content)
-    if author_match:
-        metadata["author"] = author_match.group(1).strip()
-        
-    return metadata
-
-if __name__ == "__main__":
-    main()
-EOF
-        )
+        curl -o script_converter.py https://raw.githubusercontent.com/Mikephie/AutomatedJS/script-converter/script_converter.py
         chmod +x script_converter.py
         ls -la script_converter.py
     
@@ -146,31 +36,6 @@ EOF
       run: |
         # Create QX directory if it doesn't exist
         mkdir -p QX
-        
-        # Check if QX directory is empty, if so create a test file
-        if [ -z "$(ls -A QX 2>/dev/null)" ]; then
-          echo "Creating test JavaScript file"
-          cat > QX/test.js << 'EOF'
-/* 
-#!name = Test Script
-#!desc = A test script for the converter
-#!category = 🔐APP
-#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
-
-[Rule]
-URL-REGEX,^https?:\/\/api\.example\.com\/ads,REJECT
-
-[Rewrite]
-^https?:\/\/example\.com\/redirect - reject
-
-[Script]
-http-response ^https?:\/\/api\.example\.com\/data script-path=https://example.com/script.js, requires-body=true, timeout=60, tag=testscript
-
-[MITM]
-hostname = api.example.com, example.com
-*/
-EOF
-        fi
         
         # Create output directories
         mkdir -p Loon
