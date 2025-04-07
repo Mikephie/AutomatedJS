@@ -1,9 +1,8 @@
 #!name = 彩云天气 解锁 VIP 脚本
-#!desc = 模块
-#!category = 🔐APP
-#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
-#!icon = https://raw.githubusercontent.com/Mikephie/icons/main/icon/caiyun.png
-
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/caiyun.png
 
 [Rewrite]
 ^https:\/\/ad\.cyapi\.cn\/v2\/req\?app_name=weather reject

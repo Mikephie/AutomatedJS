@@ -1,8 +1,7 @@
 #!name = 彩云天气 解锁 VIP 脚本
-#!desc = 模块
-#!category = 🔐APP
-#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
-
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 
 [URL Rewrite]
 ^https:\/\/ad\.cyapi\.cn\/v2\/req\?app_name=weather - reject

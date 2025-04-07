@@ -1,8 +1,7 @@
 #!name = ✨ AdblockPRO ✨
-#!desc = 浏览器广告拦截
-#!category = 🔐APP
-#!author = 🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
-
+#!desc=浏览器广告拦截
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 
 [Script]
 adblockpro = type=http-response, pattern=^https:\/\/api\.adblockpro\.app\/verify, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/adblockpro.js, requires-body=true, max-size=-1, timeout=60
