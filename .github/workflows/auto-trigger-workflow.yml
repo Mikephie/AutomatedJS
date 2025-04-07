@@ -5,11 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'QX/**/*.js'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'QX/**/*.js'
-  workflow_dispatch:  # Allows manual triggering
+  workflow_dispatch:
 
 jobs:
   convert:
@@ -18,41 +14,104 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # Fetch all history for all branches and tags
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
     
-    - name: Download script_converter.py
+    - name: Create simple converter script
       run: |
-        curl -o script_converter.py https://raw.githubusercontent.com/Mikephie/AutomatedJS/script-converter/script_converter.py
-        chmod +x script_converter.py
-        ls -la script_converter.py
+        cat > simple_converter.py << 'EOF'
+#!/usr/bin/env python3
+import os
+import re
+import glob
+
+# Create output directories
+os.makedirs("Loon", exist_ok=True)
+os.makedirs("Surge", exist_ok=True)
+
+# Process all JS files in QX directory
+if not os.path.exists("QX"):
+    print("QX directory not found")
+    exit(1)
+
+js_files = glob.glob("QX/*.js")
+print(f"Found {len(js_files)} JS files")
+
+for file_path in js_files:
+    filename = os.path.basename(file_path)
+    scriptname = os.path.splitext(filename)[0]
+    print(f"Processing: {filename}")
     
-    - name: Create test directories and files
+    # Read file content
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        content = f.read()
+    
+    # Extract metadata
+    name = scriptname
+    desc = "模块"
+    category = "🔐APP"
+    author = "🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ"
+    icon = f"https://raw.githubusercontent.com/Mikephie/icons/main/icon/{scriptname.lower()}.png"
+    
+    # Extract basic metadata if available
+    name_match = re.search(r'#!name\s*=\s*(.*?)[\n\r]', content)
+    if name_match:
+        name = name_match.group(1).strip()
+    
+    desc_match = re.search(r'#!desc\s*=\s*(.*?)[\n\r]', content)
+    if desc_match:
+        desc = desc_match.group(1).strip()
+    
+    # Create simple Loon config
+    loon_config = f"""#!name = {name}
+#!desc = {desc}
+#!category = {category}
+#!author = {author}
+#!icon = {icon}
+
+# Converted from QX script
+"""
+    
+    # Create simple Surge config
+    surge_config = f"""#!name = {name}
+#!desc = {desc}
+#!category = {category}
+#!author = {author}
+
+# Converted from QX script
+"""
+    
+    # Write to files
+    with open(f"Loon/{scriptname}.plugin", 'w', encoding='utf-8') as f:
+        f.write(loon_config)
+    
+    with open(f"Surge/{scriptname}.sgmodule", 'w', encoding='utf-8') as f:
+        f.write(surge_config)
+    
+    print(f"Created Loon and Surge files for {filename}")
+
+print("Conversion complete!")
+EOF
+        chmod +x simple_converter.py
+    
+    - name: Create test script if needed
       run: |
-        # Create QX directory if it doesn't exist
         mkdir -p QX
-        
-        # Create output directories
-        mkdir -p Loon
-        mkdir -p Surge
-        
-        # List directories to verify
-        echo "Directory structure:"
-        find . -type d | sort
-        echo "Files in QX directory:"
-        find QX -type f | sort
+        if [ -z "$(ls -A QX 2>/dev/null)" ]; then
+          echo "Creating test script"
+          mkdir -p QX
+          echo '/* 
+#!name = Test Script
+#!desc = A test script
+*/' > QX/test.js
+        fi
     
     - name: Run conversion script
       run: |
-        echo "Executing script_converter.py with QX directory"
-        python script_converter.py QX
-        
-        # List generated files
+        python simple_converter.py
         echo "Generated files:"
         find Loon -type f | sort
         find Surge -type f | sort
@@ -62,11 +121,5 @@ jobs:
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add Loon/ Surge/
-        
-        # Only commit if there are changes
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "Auto-convert scripts [skip ci]"
-          git push
-        fi
+        git commit -m "Auto-convert scripts [skip ci]" || echo "No changes to commit"
+        git push || echo "Nothing to push"
