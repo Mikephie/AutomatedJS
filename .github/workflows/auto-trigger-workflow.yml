@@ -1,19 +1,77 @@
-name: Basic Workflow
+name: Script Converter
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'QX/**/*.js'
 
 jobs:
-  hello:
+  convert:
     runs-on: ubuntu-latest
     steps:
-      - name: Hello World
-        run: echo "Hello World"
+      - name: Checkout repository
+        uses: actions/checkout@v3
       
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
           
-      - name: Run Python
-        run: python -c "print('Hello from Python')"
+      - name: Create directories
+        run: |
+          mkdir -p QX
+          mkdir -p Loon
+          mkdir -p Surge
+          
+      - name: Create test file if needed
+        run: |
+          if [ ! -f "QX/test.js" ]; then
+            echo "Creating test file"
+            echo "/* Test Script */" > QX/test.js
+          fi
+          
+      - name: List files
+        run: |
+          echo "Files in QX directory:"
+          ls -la QX/
+          
+      - name: Run simple converter
+        run: |
+          python -c "
+import os
+import glob
+
+print('Starting simple converter')
+
+# Process JS files
+js_files = glob.glob('QX/*.js')
+print(f'Found {len(js_files)} JS files')
+
+for file_path in js_files:
+    name = os.path.basename(file_path).split('.')[0]
+    print(f'Processing {name}')
+    
+    # Create simple configs
+    with open(f'Loon/{name}.plugin', 'w') as f:
+        f.write(f'#!name = {name}\\n#!desc = Converted script')
+    
+    with open(f'Surge/{name}.sgmodule', 'w') as f:
+        f.write(f'#!name = {name}\\n#!desc = Converted script')
+"
+          
+      - name: List generated files
+        run: |
+          echo "Generated Loon files:"
+          ls -la Loon/
+          echo "Generated Surge files:"
+          ls -la Surge/
+          
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add Loon/ Surge/
+          git commit -m "Auto-convert scripts" || echo "No changes to commit"
+          git push || echo "Nothing to push"
