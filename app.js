@@ -1,4 +1,4 @@
-const WORKER_ENDPOINT = "https://appsearch-proxy.mikephiemy.workers.dev/"; // 记得改成你的 Cloudflare Worker 地址！
+const WORKER_ENDPOINT = "https://appsearch-proxy.mikephiemy.workers.dev"; // 记得改成你的 Cloudflare Worker 地址！
 
 const DEFAULT_UA = "AppStore/3.0 iOS/17.0.1 model/iPhone14,2 hw/iPhone";
 const searchBtn = document.getElementById('searchBtn');
