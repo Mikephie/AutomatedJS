@@ -54,16 +54,30 @@ button:disabled {
   padding: 1.5em;
   border-radius: 10px;
   box-shadow: 0 0 8px rgba(0,0,0,0.1);
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
-.card h2 {
-  margin-top: 0;
+.product-item {
+  background: #f9f9f9;
+  margin: 5px 0;
+  padding: 0.8em;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.error {
+.copy-btn {
+  background: #0071e3;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+#error {
   color: red;
   text-align: center;
-  font-weight: bold;
 }
