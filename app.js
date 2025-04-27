@@ -1,4 +1,4 @@
-const WORKER_ENDPOINT = "https://appsearch.mikephiemy.workers.dev"; // 必须是正常的workers.dev地址
+const WORKER_ENDPOINT = "https://mikephiemy.workers.dev"; // 必须是正常的workers.dev地址
 const DEFAULT_UA = "AppStore/3.0 iOS/17.0.1 model/iPhone14,2 hw/iPhone";
 const CHECK_ENDPOINT = `${WORKER_ENDPOINT}?id=952050883`; // 检测用AppID（可以换成其他ID）
 const CHECK_TIMEOUT = 5000; // 检测超时5秒
