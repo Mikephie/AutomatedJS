@@ -1,4 +1,4 @@
-const WORKER_ENDPOINT = "https://你的worker名字.workers.dev"; // 修改成你的 Worker 地址
+const WORKER_ENDPOINT = "https://appsearch-proxy.mikephiemy.workers.dev/"; // 修改成你的 Worker 地址
 
 const DEFAULT_UA = "AppStore/3.0 iOS/17.0.1 model/iPhone14,2 hw/iPhone";
 const searchBtn = document.getElementById('searchBtn');
