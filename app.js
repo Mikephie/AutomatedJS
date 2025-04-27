@@ -1,6 +1,8 @@
-const WORKER_ENDPOINT = "https://appsearch-proxy.mikephiemy.workers.dev"; // 记得改成你的 Cloudflare Worker 地址！
-
+const WORKER_ENDPOINT = "https://你的worker名字.mikephiemy.workers.dev"; // 必须是正常的workers.dev地址
 const DEFAULT_UA = "AppStore/3.0 iOS/17.0.1 model/iPhone14,2 hw/iPhone";
+const CHECK_ENDPOINT = `${WORKER_ENDPOINT}?id=952050883`; // 检测用AppID（可以换成其他ID）
+const CHECK_TIMEOUT = 5000; // 检测超时5秒
+
 const searchBtn = document.getElementById('searchBtn');
 const input = document.getElementById('queryInput');
 const resultArea = document.getElementById('resultArea');
@@ -77,6 +79,25 @@ async function queryProductIds(appId) {
   }
 }
 
+async function healthCheck() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT);
+
+    const res = await fetch(CHECK_ENDPOINT, { method: "GET", signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      throw new Error(`HTTP错误: ${res.status}`);
+    }
+    return true;
+  } catch (error) {
+    console.error('[健康检查失败]', error.message);
+    alert("❗ Worker 后端暂时不可用，请稍后再试！");
+    return false;
+  }
+}
+
 async function searchApp() {
   const query = input.value.trim();
   if (!query) {
@@ -88,9 +109,14 @@ async function searchApp() {
   resultArea.innerHTML = "";
   uaSection.style.display = "none";
 
+  const ok = await healthCheck();
+  if (!ok) {
+    showLoading(false);
+    return;
+  }
+
   let appId = "";
 
-  // 判断输入类型
   if (/^\d+$/.test(query)) {
     appId = query;
     await queryProductIds(appId);
@@ -103,7 +129,6 @@ async function searchApp() {
       showError('无法解析 App Store链接');
     }
   } else if (query.startsWith("com.")) {
-    // Bundle ID 查找
     try {
       const res = await fetch(`https://itunes.apple.com/lookup?bundleId=${query}`);
       const data = await res.json();
@@ -118,7 +143,6 @@ async function searchApp() {
       showError('查询失败，请稍后再试。');
     }
   } else {
-    // 名称搜索
     try {
       const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=software&limit=10`);
       const data = await res.json();
@@ -167,7 +191,6 @@ copyUaBtn.addEventListener('click', () => {
   copyText(DEFAULT_UA);
 });
 
-// 点击弹窗外关闭
 window.onclick = function(event) {
   if (event.target == modal) {
     modal.style.display = "none";
