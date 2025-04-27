@@ -77,7 +77,63 @@ button:disabled {
   border-radius: 5px;
 }
 
-#error {
+.error {
   color: red;
   text-align: center;
+}
+
+/* 弹窗样式 */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background: rgba(0,0,0,0.4);
+  animation: fadeIn 0.3s;
+}
+
+.modal-content {
+  background: #fff;
+  margin: auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  animation: scaleIn 0.3s;
+}
+
+.app-select-item {
+  display: flex;
+  align-items: center;
+  background: #f2f4f7;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.app-select-item:hover {
+  background: #e0e0e0;
+}
+
+.app-select-item img {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  margin-right: 15px;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+
+@keyframes scaleIn {
+  from {transform: scale(0.8);}
+  to {transform: scale(1);}
 }
