@@ -10,14 +10,18 @@ export default {
       });
     }
 
-    const apiUrl = `https://itunes.apple.com/lookup?id=${appId}`;
+    const apiUrl = `https://api.appsearch.apple.com/v1/app/detail?id=${appId}`;
 
     try {
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
+          "User-Agent": "AppStore/3.0 iOS/17.0.1 model/iPhone14,2 hw/iPhone",
+          "X-Device-Id": crypto.randomUUID(),  // 动态生成设备ID
           "Accept": "application/json",
-          "User-Agent": "iTunes/12.10.1 (Macintosh; OS X 10.15.1) AppleWebKit/605.1.15",
+          "Accept-Language": "en-US",
+          "Connection": "keep-alive",
+          "X-FaceTime-Device-Id": crypto.randomUUID() // 补充 FaceTime ID，更像真机
         },
         cf: {
           cacheEverything: false,
@@ -29,18 +33,12 @@ export default {
         throw new Error(`Upstream API error: ${response.status}`);
       }
 
-      const data = await response.json();
-
-      return new Response(JSON.stringify({
-        appId: appId,
-        bundleId: data.results?.[0]?.bundleId || null,
-        appName: data.results?.[0]?.trackName || null,
-        productIds: data.results?.[0]?.inAppPurchases || []
-      }), {
+      const result = await response.text();
+      return new Response(result, {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Origin": "*", // 网页端可以直接连
           "Access-Control-Allow-Methods": "GET",
         }
       });
