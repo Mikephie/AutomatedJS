@@ -2,6 +2,7 @@ export default {
   async fetch(request) {
     const url = new URL(request.url);
     const appId = url.searchParams.get('id');
+    
     if (!appId) {
       return new Response(JSON.stringify({ error: "Missing app ID" }), {
         status: 400,
@@ -9,22 +10,46 @@ export default {
       });
     }
 
-    const apiUrl = `https://api.appsearch.apple.com/v1/app/detail?id=${appId}`;
+    const apiUrl = `https://itunes.apple.com/lookup?id=${appId}`;
+
     try {
       const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
-          "User-Agent": "AppStore/3.0 iOS/17.0.1 model/iPhone14,2 hw/iPhone",
-          "X-Device-Id": crypto.randomUUID(),
+          "Accept": "application/json",
+          "User-Agent": "iTunes/12.10.1 (Macintosh; OS X 10.15.1) AppleWebKit/605.1.15",
         },
+        cf: {
+          cacheEverything: false,
+          disableCache: true,
+        }
       });
-      const text = await response.text();
-      return new Response(text, { headers: { "Content-Type": "application/json" } });
+
+      if (!response.ok) {
+        throw new Error(`Upstream API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      return new Response(JSON.stringify({
+        appId: appId,
+        bundleId: data.results?.[0]?.bundleId || null,
+        appName: data.results?.[0]?.trackName || null,
+        productIds: data.results?.[0]?.inAppPurchases || []
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET",
+        }
+      });
+
     } catch (error) {
       return new Response(JSON.stringify({ error: "Fetch failed", message: error.message }), {
         status: 502,
         headers: { "Content-Type": "application/json" },
       });
     }
-  },
+  }
 };
