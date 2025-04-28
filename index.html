@@ -2,39 +2,80 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>App Product ID 查询工具 - Mikephie Tools</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <title>App Product ID 查询工具</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #1f1c2c, #928dab);
+      color: white;
+      font-family: 'Helvetica Neue', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    input {
+      width: 300px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    pre {
+      background: #333;
+      padding: 15px;
+      border-radius: 5px;
+      width: 90%;
+      max-width: 800px;
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>🔍 App 信息查询工具</h1>
-    <p>输入 App 名称 / App ID / App Store链接 / Bundle ID 查询 Product ID</p>
-  </header>
+  <h1>App 产品ID查询</h1>
+  <input type="text" id="appIdInput" placeholder="请输入 App ID">
+  <button onclick="queryApp()">查询</button>
 
-  <main>
-    <div class="input-group">
-      <input id="queryInput" type="text" placeholder="例如: VLLO / com.vimosoft.vllo / 952050883 / App Store链接" />
-      <button id="searchBtn">查询</button>
-    </div>
+  <pre id="result">等待查询...</pre>
 
-    <div id="uaSection" style="display:none;">
-      <h3>当前 User-Agent:</h3>
-      <div id="uaText"></div>
-      <button id="copyUaBtn">复制UA</button>
-    </div>
+<script>
+  const WORKER_ENDPOINT = "https://query-app.mikephie76.workers.dev/";
 
-    <div id="resultArea"></div>
-  </main>
+  async function queryApp() {
+    const appId = document.getElementById('appIdInput').value.trim();
+    if (!appId) {
+      alert('请输入 App ID！');
+      return;
+    }
 
-  <!-- 弹出选择框 -->
-  <div id="modal" class="modal">
-    <div class="modal-content" id="modalContent"></div>
-  </div>
+    document.getElementById('result').textContent = "查询中...";
 
-  <footer>
-    Powered by Mikephie Tools
-  </footer>
+    try {
+      const response = await fetch(`${WORKER_ENDPOINT}?id=${encodeURIComponent(appId)}`);
+      const data = await response.json();
+      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    } catch (err) {
+      document.getElementById('result').textContent = "查询失败：" + err.message;
+    }
+  }
+</script>
+
 </body>
 </html>
