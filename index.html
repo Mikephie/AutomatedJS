@@ -1,111 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>App Search - Powered by Mikephie Tools</title>
-<style>
-/* （样式跟之前美化版一致） */
-body { margin: 0; font-family: Arial, sans-serif; background: #0f2027; color: #ffffff; display: flex; flex-direction: column; min-height: 100vh; }
-.container { max-width: 600px; margin: 80px auto 20px auto; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; }
-h1 { text-align: center; }
-form { display: flex; margin-bottom: 20px; }
-input[type="text"] { flex: 1; padding: 10px; font-size: 16px; border: none; border-radius: 5px 0 0 5px; outline: none; }
-button { padding: 10px 20px; font-size: 16px; border: none; background-color: #3498db; color: white; cursor: pointer; border-radius: 0 5px 5px 0; }
-button:hover { background-color: #2980b9; }
-.result { margin-top: 20px; }
-.result-item { margin-bottom: 10px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
-.result-label { font-weight: bold; }
-.copy-btn { background: #555; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
-.copy-btn:hover { background: #777; }
-#error { color: #e74c3c; margin-top: 20px; text-align: center; }
-.footer { text-align: center; margin: 40px 0 10px 0; font-size: 0.8em; color: #aaa; }
-</style>
+  <meta charset="UTF-8">
+  <title>AppSearch - Powered by Mikephie Tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { background: linear-gradient(to right, #0f2027, #203a43, #2c5364); color: #fff; font-family: Arial, sans-serif; text-align: center; padding-top: 100px; }
+    .container { background: rgba(255,255,255,0.1); padding: 40px; border-radius: 10px; display: inline-block; }
+    input { padding: 10px; border: none; border-radius: 5px; width: 250px; margin-right: 10px; }
+    button { padding: 10px 20px; border: none; border-radius: 5px; background: #4CAF50; color: white; cursor: pointer; }
+    button:hover { background: #45a049; }
+    .result { margin-top: 20px; }
+  </style>
 </head>
 <body>
-<div class="container">
+  <div class="container">
     <h1>App Search</h1>
-    <form id="searchForm">
-        <input type="text" id="searchInput" placeholder="Enter App Name / Bundle ID / App Store URL" required />
-        <button type="submit">Search</button>
-    </form>
-    <div id="result" class="result"></div>
-    <div id="error"></div>
-</div>
-<div class="footer">Powered by Mikephie Tools</div>
+    <input type="text" id="appid" placeholder="Enter App ID">
+    <button onclick="search()">Search</button>
+    <div class="result" id="result"></div>
+  </div>
 
-<script>
-const WORKER_ENDPOINT = "https://your-vercel-project.vercel.app/api"; // 这里换成你的Vercel API地址！
+  <script>
+    async function search() {
+      const id = document.getElementById('appid').value.trim();
+      if (!id) return alert('Please enter an App ID.');
 
-function createResultItem(label, value) {
-    const div = document.createElement('div');
-    div.className = 'result-item';
-    const labelSpan = document.createElement('span');
-    labelSpan.className = 'result-label';
-    labelSpan.textContent = label;
-    const valueSpan = document.createElement('span');
-    valueSpan.textContent = value;
-    const copyBtn = document.createElement('button');
-    copyBtn.className = 'copy-btn';
-    copyBtn.textContent = 'Copy';
-    copyBtn.onclick = () => {
-        navigator.clipboard.writeText(value).then(() => {}, () => {});
-    };
-    div.appendChild(labelSpan);
-    div.appendChild(valueSpan);
-    div.appendChild(copyBtn);
-    return div;
-}
+      const apiUrl = `https://appsearch-api.vercel.app/api?id=${id}`;
+      const res = await fetch(apiUrl);
+      const data = await res.json();
 
-document.getElementById('searchForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const query = document.getElementById('searchInput').value.trim();
-    const resultDiv = document.getElementById('result');
-    const errorDiv = document.getElementById('error');
-    resultDiv.innerHTML = '';
-    errorDiv.textContent = '';
-
-    if (!query) return;
-
-    let url = WORKER_ENDPOINT + "?id=";
-
-    if (query.startsWith('http')) {
-        const match = query.match(/id(\d+)/);
-        if (match) {
-            url += match[1];
-        } else {
-            errorDiv.textContent = 'Invalid App Store URL.';
-            return;
-        }
-    } else if (query.includes('.') && !query.includes(' ')) {
-        errorDiv.textContent = '暂时不支持直接BundleID查询，请用App Store链接。';
-        return;
-    } else {
-        errorDiv.textContent = '暂时不支持直接App名称查询，请用App Store链接。';
-        return;
+      const result = document.getElementById('result');
+      if (data.error) {
+        result.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+      } else {
+        result.innerHTML = `
+          <p><strong>App Name:</strong> ${data.appName}</p>
+          <p><strong>Bundle ID:</strong> ${data.bundleId}</p>
+          <p><strong>App ID:</strong> ${data.appId}</p>
+          <p><strong>Product IDs:</strong> ${data.productIds.length > 0 ? data.productIds.join('<br>') : '(None)'}</p>
+        `;
+      }
     }
+  </script>
 
-    fetch(url)
-    .then(response => {
-        if (!response.ok) throw new Error('Failed to fetch: ' + response.status);
-        return response.json();
-    })
-    .then(data => {
-        if (data.error) {
-            errorDiv.textContent = data.error;
-            return;
-        }
-        if (data.appName) resultDiv.appendChild(createResultItem('App Name', data.appName));
-        if (data.bundleId) resultDiv.appendChild(createResultItem('Bundle ID', data.bundleId));
-        if (data.appId) resultDiv.appendChild(createResultItem('App ID', data.appId));
-        if (Array.isArray(data.productIds)) {
-            resultDiv.appendChild(createResultItem('Product IDs', data.productIds.join(', ')));
-        }
-    })
-    .catch(error => {
-        errorDiv.textContent = error.message;
-    });
-});
-</script>
 </body>
 </html>
