@@ -5,86 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>App Search - Powered by Mikephie Tools</title>
 <style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-    color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-.container {
-    max-width: 600px;
-    margin: 80px auto 20px auto;
-    padding: 20px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 10px;
-}
-h1 {
-    text-align: center;
-}
-form {
-    display: flex;
-    margin-bottom: 20px;
-}
-input[type="text"] {
-    flex: 1;
-    padding: 10px;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px 0 0 5px;
-    outline: none;
-}
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    border: none;
-    background-color: #3498db;
-    color: white;
-    cursor: pointer;
-    border-radius: 0 5px 5px 0;
-}
-button:hover {
-    background-color: #2980b9;
-}
-.result {
-    margin-top: 20px;
-}
-.result-item {
-    margin-bottom: 10px;
-    background: rgba(255,255,255,0.1);
-    padding: 10px;
-    border-radius: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.result-label {
-    font-weight: bold;
-}
-.copy-btn {
-    background: #555;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.copy-btn:hover {
-    background: #777;
-}
-#error {
-    color: #e74c3c;
-    margin-top: 20px;
-    text-align: center;
-}
-.footer {
-    text-align: center;
-    margin: 40px 0 10px 0;
-    font-size: 0.8em;
-    color: #aaa;
-}
+/* （样式跟之前美化版一致） */
+body { margin: 0; font-family: Arial, sans-serif; background: #0f2027; color: #ffffff; display: flex; flex-direction: column; min-height: 100vh; }
+.container { max-width: 600px; margin: 80px auto 20px auto; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+h1 { text-align: center; }
+form { display: flex; margin-bottom: 20px; }
+input[type="text"] { flex: 1; padding: 10px; font-size: 16px; border: none; border-radius: 5px 0 0 5px; outline: none; }
+button { padding: 10px 20px; font-size: 16px; border: none; background-color: #3498db; color: white; cursor: pointer; border-radius: 0 5px 5px 0; }
+button:hover { background-color: #2980b9; }
+.result { margin-top: 20px; }
+.result-item { margin-bottom: 10px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+.result-label { font-weight: bold; }
+.copy-btn { background: #555; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+.copy-btn:hover { background: #777; }
+#error { color: #e74c3c; margin-top: 20px; text-align: center; }
+.footer { text-align: center; margin: 40px 0 10px 0; font-size: 0.8em; color: #aaa; }
 </style>
 </head>
 <body>
@@ -100,7 +35,7 @@ button:hover {
 <div class="footer">Powered by Mikephie Tools</div>
 
 <script>
-const WORKER_ENDPOINT = "https://api.appsearch.space/";
+const WORKER_ENDPOINT = "https://your-vercel-project.vercel.app/api"; // 这里换成你的Vercel API地址！
 
 function createResultItem(label, value) {
     const div = document.createElement('div');
@@ -132,26 +67,27 @@ document.getElementById('searchForm').addEventListener('submit', function(e) {
 
     if (!query) return;
 
-    let url = WORKER_ENDPOINT;
+    let url = WORKER_ENDPOINT + "?id=";
+
     if (query.startsWith('http')) {
         const match = query.match(/id(\d+)/);
         if (match) {
-            url += '?id=' + match[1];
+            url += match[1];
         } else {
             errorDiv.textContent = 'Invalid App Store URL.';
             return;
         }
     } else if (query.includes('.') && !query.includes(' ')) {
-        url += '?bundle=' + encodeURIComponent(query);
+        errorDiv.textContent = '暂时不支持直接BundleID查询，请用App Store链接。';
+        return;
     } else {
-        url += '?q=' + encodeURIComponent(query);
+        errorDiv.textContent = '暂时不支持直接App名称查询，请用App Store链接。';
+        return;
     }
 
     fetch(url)
     .then(response => {
-        if (!response.ok) {
-            throw new Error('Failed to fetch: ' + response.status);
-        }
+        if (!response.ok) throw new Error('Failed to fetch: ' + response.status);
         return response.json();
     })
     .then(data => {
@@ -159,9 +95,9 @@ document.getElementById('searchForm').addEventListener('submit', function(e) {
             errorDiv.textContent = data.error;
             return;
         }
-        if (data.name) resultDiv.appendChild(createResultItem('App Name', data.name));
+        if (data.appName) resultDiv.appendChild(createResultItem('App Name', data.appName));
         if (data.bundleId) resultDiv.appendChild(createResultItem('Bundle ID', data.bundleId));
-        if (data.appId || data.appID) resultDiv.appendChild(createResultItem('App ID', data.appId || data.appID));
+        if (data.appId) resultDiv.appendChild(createResultItem('App ID', data.appId));
         if (Array.isArray(data.productIds)) {
             resultDiv.appendChild(createResultItem('Product IDs', data.productIds.join(', ')));
         }
