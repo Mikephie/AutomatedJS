@@ -1,81 +1,273 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>App 产品ID查询</title>
-  <style>
-    body {
-      background: linear-gradient(to right, #1f1c2c, #928dab);
-      color: white;
-      font-family: 'Helvetica Neue', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    h1 {
-      margin-bottom: 20px;
-      font-size: 28px;
-    }
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-    }
-    input {
-      width: 300px;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    pre {
-      background: #333;
-      padding: 15px;
-      border-radius: 5px;
-      width: 90%;
-      max-width: 800px;
-      overflow-x: auto;
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App Search - Mikephie Tools</title>
+    <style>
+        /* Global Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #0f0c29; /* Fallback for old browsers */
+            background: linear-gradient(to right, #0f0c29, #302b63, #24243e); /* Dark gradient background */
+            color: #ffffff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 10% auto 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2em;
+            margin-bottom: 0.5em;
+        }
+        /* Form Styles */
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 1em;
+        }
+        input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            padding: 0.6em 0.8em;
+            font-size: 1em;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #555;
+            border-radius: 4px 0 0 4px;
+            outline: none;
+        }
+        input[type="text"]::placeholder {
+            color: #aaa;
+        }
+        input[type="text"]:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.5);
+        }
+        button[type="submit"] {
+            padding: 0.6em 1em;
+            font-size: 1em;
+            color: #fff;
+            background: #3498db;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover {
+            background: #2980b9;
+        }
+        button[type="submit"]:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.5);
+        }
+        /* Result & Error Styles */
+        #result {
+            text-align: left;
+            margin-top: 1em;
+        }
+        .result-item {
+            margin: 0.5em 0;
+            display: flex;
+            align-items: center;
+        }
+        .label {
+            min-width: 100px;
+            font-weight: bold;
+        }
+        .value {
+            flex: 1;
+            margin-right: 0.5em;
+            word-break: break-all;
+        }
+        .copy-btn {
+            background: #555;
+            border: none;
+            color: #fff;
+            padding: 0.3em 0.5em;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .copy-btn svg {
+            fill: #fff;
+        }
+        .copy-btn:hover {
+            background: #6c6c6c;
+        }
+        .copy-btn:active {
+            background: #777;
+        }
+        .copy-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+        #error {
+            margin-top: 1em;
+            color: #e74c3c;
+        }
+        #error.hidden {
+            display: none;
+        }
+        /* Footer text */
+        .footer {
+            margin-top: 3em;
+            font-size: 0.8em;
+            color: #777;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <h1>App 产品ID查询</h1>
-  <input type="text" id="appIdInput" placeholder="请输入 App ID">
-  <button onclick="queryApp()">查询</button>
-
-  <pre id="result">等待查询...</pre>
-
-<script>
-  const WORKER_ENDPOINT = "https://query-app.mikephie76.workers.dev";
-
-  async function queryApp() {
-    const appId = document.getElementById('appIdInput').value.trim();
-    if (!appId) {
-      alert('请输入 App ID！');
-      return;
-    }
-
-    document.getElementById('result').textContent = "查询中...";
-
-    try {
-      const response = await fetch(`${WORKER_ENDPOINT}?id=${encodeURIComponent(appId)}`);
-      const data = await response.json();
-      document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-    } catch (err) {
-      document.getElementById('result').textContent = "查询失败：" + err.message;
-    }
-  }
-</script>
-
+    <div class="container">
+        <!-- Title -->
+        <h1>App Search</h1>
+        <!-- Search Form -->
+        <form id="searchForm">
+            <input type="text" id="searchInput" placeholder="Enter App Name, Bundle ID or App Store URL" required />
+            <button type="submit">Search</button>
+        </form>
+        <!-- Result Section -->
+        <div id="result"></div>
+        <!-- Error Message -->
+        <div id="error" class="hidden"></div>
+        <!-- Footer -->
+        <div class="footer">Powered by Mikephie Tools</div>
+    </div>
+    <script>
+        // Utility function to create a result item element with label, value and copy button
+        function createResultItem(labelText, valueText) {
+            var itemDiv = document.createElement('div');
+            itemDiv.className = 'result-item';
+            var labelSpan = document.createElement('span');
+            labelSpan.className = 'label';
+            labelSpan.textContent = labelText;
+            var valueSpan = document.createElement('span');
+            valueSpan.className = 'value';
+            valueSpan.textContent = valueText;
+            var copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.title = 'Copy to clipboard';
+            // SVG icon for copy
+            copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" ry="2" fill="currentColor"></rect><rect x="8" y="8" width="16" height="16" rx="2" ry="2" fill="currentColor"></rect></svg>';
+            // Copy functionality
+            copyBtn.addEventListener('click', function() {
+                var textToCopy = valueText;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(textToCopy).catch(function(err) {
+                        console.error('Clipboard copy failed', err);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    var textarea = document.createElement('textarea');
+                    textarea.value = textToCopy;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                    } catch (err) {
+                        console.error('execCommand copy failed', err);
+                    }
+                    document.body.removeChild(textarea);
+                }
+            });
+            itemDiv.appendChild(labelSpan);
+            itemDiv.appendChild(valueSpan);
+            itemDiv.appendChild(copyBtn);
+            return itemDiv;
+        }
+        // Function to perform search
+        function performSearch(query) {
+            var resultDiv = document.getElementById('result');
+            var errorDiv = document.getElementById('error');
+            // Clear previous results and errors
+            resultDiv.innerHTML = '';
+            errorDiv.textContent = '';
+            errorDiv.classList.add('hidden');
+            // Construct the request URL
+            var url = 'https://api.appsearch.space/';
+            var q = query.trim();
+            if (!q) return;
+            // Determine input type
+            if (q.startsWith('http')) {
+                // Extract numeric ID from URL
+                var match = q.match(/\/id(\d+)/);
+                if (match) {
+                    q = match[1];
+                }
+            }
+            // Add appropriate query parameter
+            if (/^\d+$/.test(q)) {
+                // numeric (App Store ID)
+                url += '?id=' + encodeURIComponent(q);
+            } else if (q.indexOf('.') !== -1 && q.indexOf(' ') === -1) {
+                // looks like a Bundle ID
+                url += '?bundle=' + encodeURIComponent(q);
+            } else {
+                // treat as app name search term
+                url += '?q=' + encodeURIComponent(q);
+            }
+            // Fetch data from API
+            fetch(url)
+                .then(function(response) {
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('No results found. Please check the input.');
+                        } else {
+                            throw new Error('Query failed (status ' + response.status + ').');
+                        }
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (!data) {
+                        throw new Error('No results found. Please check the input.');
+                    }
+                    // Display result fields
+                    if (data.name) {
+                        resultDiv.appendChild(createResultItem('App Name:', data.name));
+                    }
+                    if (data.bundleId) {
+                        resultDiv.appendChild(createResultItem('Bundle ID:', data.bundleId));
+                    }
+                    var appIdValue = data.appId || data.appID;
+                    if (appIdValue) {
+                        resultDiv.appendChild(createResultItem('App ID:', appIdValue));
+                    }
+                    var products = data.productIds || data.products;
+                    if (products) {
+                        var productText;
+                        if (Array.isArray(products)) {
+                            productText = products.length ? products.join(', ') : 'None';
+                        } else if (typeof products === 'string') {
+                            productText = products || 'None';
+                        } else {
+                            productText = 'None';
+                        }
+                        resultDiv.appendChild(createResultItem('Product IDs:', productText));
+                    }
+                })
+                .catch(function(error) {
+                    // Show error message
+                    errorDiv.textContent = error.message;
+                    errorDiv.classList.remove('hidden');
+                });
+        }
+        // Setup event handler for form submission
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var query = document.getElementById('searchInput').value;
+            performSearch(query);
+        });
+    </script>
 </body>
 </html>
