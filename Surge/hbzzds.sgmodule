@@ -1,0 +1,10 @@
+#!name = ✨ 海报制作大师 ✨
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+hbzzds = type=http-response, pattern=^https?:\/\/poster\.leminet\.cn\/v01\/profile, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/hbzzds.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% poster.leminet.cn

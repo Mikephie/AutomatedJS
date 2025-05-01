@@ -1,0 +1,10 @@
+#!name = 水印全能王 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+syqnw = type=http-response, pattern=^https:\/\/waterqnwa\.yunxiaoguo\.cn\/user\/info, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/syqnw.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% waterqnwa.yunxiaoguo.cn

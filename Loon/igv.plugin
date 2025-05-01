@@ -1,0 +1,15 @@
+#!name = igv
+#!desc=电影院购票
+#!category=🚫广告
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/igv.png
+
+[Rewrite]
+# reject
+^https:\/\/media\.gv\.com\.sg\/cms\/images\/ads\/.*\.(jpg|png|gif) reject
+
+[Script]
+http-response ^https:\/\/m\.gv\.com\.sg\/iGV2\/general\/advpage\.html script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/igv.js, requires-body=true, timeout=60, tag=igv
+
+[MITM]
+hostname = m.gv.com.sg, media.gv.com.sg

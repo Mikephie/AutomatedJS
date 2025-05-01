@@ -1,0 +1,11 @@
+#!name = zypg
+#!desc=效率
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/zypg.png
+
+[Script]
+http-response ^https?:\/\/appss\.(rhinoxky|baomingding|rhinoxlab)\.com\/app\/account\/getAccountInfo script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/zypg.js, requires-body=true, timeout=60, tag=zypg
+
+[MITM]
+hostname = appss.rhinoxlab.com, appss.baomingding.com

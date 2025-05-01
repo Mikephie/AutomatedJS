@@ -1,0 +1,10 @@
+#!name = Miraa 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+miraa = type=http-response, pattern=^https:\/\/(api|pay)\.myoland\.com, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/miraa.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% api.myoland.com, pay.myoland.com

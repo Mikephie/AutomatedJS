@@ -1,0 +1,11 @@
+#!name = PAGAcard 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/pagacard.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/pagacard.js, requires-body=true, timeout=60, tag=pagacard
+
+[MITM]
+hostname = example.com

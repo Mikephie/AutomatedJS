@@ -1,0 +1,10 @@
+#!name = notebook-subs
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+notebook-subs = type=http-response, pattern=^https://notebook.zoho.com/api/v1/userprofile/accounts/payment?action=get_current_plan_detail&include_(expired_plans|purchase_platform)=(true|false), script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/notebook-subs.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% notebook.zoho.com

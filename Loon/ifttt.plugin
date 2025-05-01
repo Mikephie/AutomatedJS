@@ -1,0 +1,11 @@
+#!name = ✨ IFTTT ✨
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/ifttt.png
+
+[Script]
+http-response ^https?:\/\/ifttt\.com\/api\/v\d\/graph script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/ifttt.js, requires-body=true, timeout=60, tag=ifttt
+
+[MITM]
+hostname = ifttt.com

@@ -1,0 +1,11 @@
+#!name = wshb1
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/wshb1.png
+
+[Script]
+http-response ^https?:\/\/api-poster\.ycase\.cn\/api\/user\/info script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/wshb1.js, requires-body=true, timeout=60, tag=wshb1
+
+[MITM]
+hostname = api-poster.ycase.cn

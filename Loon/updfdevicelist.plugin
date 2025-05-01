@@ -1,0 +1,11 @@
+#!name = updfdevicelist
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/updfdevicelist.png
+
+[Script]
+http-response https:\/\/api\.updf\.com\/v1\/user\/(?:multiBindPersonalDevice|getPersonalDeviceList) script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/updfdevicelist.js, requires-body=true, timeout=60, tag=updfdevicelist
+
+[MITM]
+hostname = *.updf.com

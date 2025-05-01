@@ -1,0 +1,11 @@
+#!name = itunestest-2
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/itunestest-2.png
+
+[Script]
+http-response ^https?:\/\/buy\.itunes\.apple\.com\/verifyReceipt$ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/itunestest-2.js, requires-body=true, timeout=60, tag=itunestest-2
+
+[MITM]
+hostname = buy.itunes.apple.com

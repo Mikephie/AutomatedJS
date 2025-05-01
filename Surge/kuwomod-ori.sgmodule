@@ -1,0 +1,10 @@
+#!name = kuwomod-ori
+#!desc=〔 酷我音乐&酷我畅听 〕全功能破解
+#!category=🔐APP
+#!author=影子[https://www.napi.ltd]
+
+[Script]
+kuwomod-ori = type=http-response, pattern=^https?://example.com/, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/kuwomod-ori.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% *.kuwo.cn

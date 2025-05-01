@@ -1,0 +1,10 @@
+#!name = ✨ GP4o ✨
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+GP4o = type=http-response, pattern=^https:\/\/nichousha\.sjrjyffs\.top, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/gp4o.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% nichousha.sjrjyffs.top

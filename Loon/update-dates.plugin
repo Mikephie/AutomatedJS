@@ -1,0 +1,11 @@
+#!name = update-dates
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/update-dates.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/update-dates.js, requires-body=true, timeout=60, tag=update-dates
+
+[MITM]
+hostname = example.com

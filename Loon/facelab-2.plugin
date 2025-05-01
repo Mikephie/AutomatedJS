@@ -1,0 +1,11 @@
+#!name = facelab-2
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/facelab-2.png
+
+[Script]
+http-response ^https?:\/\/subscription-api\.lyrebirdstudio\.net\/subscriptions\/apple script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/FaceLabPremium.js, requires-body=true, timeout=60, tag=facelab-2
+
+[MITM]
+hostname = subscription-api.lyrebirdstudio.net

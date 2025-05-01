@@ -1,0 +1,11 @@
+#!name = qjsm
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/qjsm.png
+
+[Script]
+http-response ^https?:\/\/sm.szsszykj.com\/api\/user\/vip script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/qjsm.js, requires-body=true, timeout=60, tag=qjsm
+
+[MITM]
+hostname = sm.szsszykj.com

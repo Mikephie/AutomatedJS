@@ -1,0 +1,10 @@
+#!name = javdb
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+javdb = type=http-response, pattern=^https?://example.com/, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/javdb.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% example.com

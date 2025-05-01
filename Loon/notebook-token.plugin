@@ -1,0 +1,11 @@
+#!name = notebook-token
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/notebook-token.png
+
+[Script]
+http-response ^https:\/\/sdk-apptics\.zoho\.com\/sdk\/api\/apptics\/v1\/app\/bearertoken script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/notebook-token.js, requires-body=true, timeout=60, tag=notebook-token
+
+[MITM]
+hostname = notebook.zoho.com

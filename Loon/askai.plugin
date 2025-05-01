@@ -1,0 +1,11 @@
+#!name = AskAI 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/askai.png
+
+[Script]
+http-response ^https:\/\/purchase-verifier\.cdwapi\.com\/ios script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/askai.js, requires-body=true, timeout=60, tag=askai
+
+[MITM]
+hostname = purchase-verifier.cdwapi.com

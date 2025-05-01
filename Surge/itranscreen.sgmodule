@@ -1,0 +1,10 @@
+#!name = itranscreen
+#!desc=效率
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+itranscreen = type=http-response, pattern=^https?:\/\/.+.(itranscreen|tencentcs).+\/(settings|api\/v1\/user\/quota\?user_id).*$, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/itranscreen.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% .+.(itranscreen|tencentcs).+

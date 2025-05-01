@@ -1,0 +1,11 @@
+#!name = PosterMaker 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/postermaker.png
+
+[Script]
+http-response ^https:\/\/dcdnposter\.leminet\.cn\/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/postermaker.js, requires-body=true, timeout=60, tag=postermaker
+
+[MITM]
+hostname = dcdnposter.leminet.cn

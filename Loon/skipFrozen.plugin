@@ -1,0 +1,11 @@
+#!name = skipFrozen
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/skipFrozen.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/skipFrozen.js, requires-body=true, timeout=60, tag=skipFrozen
+
+[MITM]
+hostname = example.com

@@ -1,0 +1,10 @@
+#!name = genpix
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+genpix = type=http-response, pattern=^https:\/\/apiv2\.vivipic\.com\/get-tx-info, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/genpix.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% apiv2.vivipic.com

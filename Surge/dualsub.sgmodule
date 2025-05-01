@@ -1,0 +1,10 @@
+#!name = dualsub
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+dualsub = type=http-response, pattern=^https?://example.com/, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/dualsub.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% *.media.dssott.com, *.media.starott.com, *.api.hbo.com, *.hbomaxcdn.com, *.huluim.com, *.nflxvideo.net, *.cbsaavideo.com, *.cbsivideo.com, *.cloudfront.net, *.akamaihd.net, *.avi-cdn.net, *.youtube.com

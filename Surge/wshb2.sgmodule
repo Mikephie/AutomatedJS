@@ -1,0 +1,10 @@
+#!name = wshb2
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+wshb2 = type=http-response, pattern=^https?:\/\/api-poster\.ycase\.cn\/api\/User\/home, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/wshb2.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% poster.leminet.cn

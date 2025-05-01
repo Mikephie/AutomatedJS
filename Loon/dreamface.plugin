@@ -1,0 +1,11 @@
+#!name = DreamFace 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/dreamface.png
+
+[Script]
+http-response ^https?:\/\/dreamfaceapp\.com\/df-server\/user\/save_user_login script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/dreamface.js, requires-body=true, timeout=60, tag=dreamface
+
+[MITM]
+hostname = dreamfaceapp.com

@@ -1,0 +1,11 @@
+#!name = autojoinTF
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/autojoinTF.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/autojoinTF.js, requires-body=true, timeout=60, tag=autojoinTF
+
+[MITM]
+hostname = example.com

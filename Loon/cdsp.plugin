@@ -1,0 +1,11 @@
+#!name = 彩豆视频水印宝 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/cdsp.png
+
+[Script]
+http-response ^https?:\/\/appss.baomingding.com\/app\/account\/getAccountInfo script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/cdsp.js, requires-body=true, timeout=60, tag=cdsp
+
+[MITM]
+hostname = appss.baomingding.com

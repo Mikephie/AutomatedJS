@@ -1,0 +1,14 @@
+#!name = ✨ iGV ✨
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/igv-2.png
+
+[Rewrite]
+^https:\/\/media\.gv\.com\.sg\/cms\/images\/ads\/(CorpSales_NowAllowed_600x1200|OnlineF&BDeal)\.jpg reject
+
+[Script]
+http-response ^https:\/\/m\.gv\.com\.sg\/iGV2\/general\/advpage\.html script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/igv.js, requires-body=true, timeout=60, tag=igv-2
+
+[MITM]
+hostname = m.gv.com.sg, media.gv.com.sg

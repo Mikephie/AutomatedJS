@@ -1,0 +1,10 @@
+#!name = caipu
+#!desc=效率
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+caipu = type=http-response, pattern=^https:\/\/api.*\.xiangha\.com, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/caipu.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% *.xiangha.com

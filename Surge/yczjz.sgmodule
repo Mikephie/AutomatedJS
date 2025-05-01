@@ -1,0 +1,10 @@
+#!name = yczjz
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+yczjz = type=http-response, pattern=^https:\/\/idp2api\.netpock\.com\/api\/user_info, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/yczjz.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% idp2api.netpock.com

@@ -1,0 +1,11 @@
+#!name = iw-ori
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/iw-ori.png
+
+[Script]
+http-response ^https:\/\/api-webclip\.wdxzj\.com\/\?service=App\.User\.GetInfo script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/iw.js, requires-body=true, timeout=60, tag=iw-ori
+
+[MITM]
+hostname = api-webclip.wdxzj.com

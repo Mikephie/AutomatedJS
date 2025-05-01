@@ -1,0 +1,10 @@
+#!name = qjsm-afengye
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+qjsm-afengye = type=http-response, pattern=^https:\/\/sm\.szsszykj\.com\/, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/saomiao.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% sm.szsszykj.com

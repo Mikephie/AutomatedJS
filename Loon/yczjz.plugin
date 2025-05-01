@@ -1,0 +1,11 @@
+#!name = yczjz
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/yczjz.png
+
+[Script]
+http-response ^https:\/\/idp2api\.netpock\.com\/api\/user_info script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/yczjz.js, requires-body=true, timeout=60, tag=yczjz
+
+[MITM]
+hostname = idp2api.netpock.com

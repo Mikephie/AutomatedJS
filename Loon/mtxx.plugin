@@ -1,0 +1,11 @@
+#!name = mtxx
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/mtxx.png
+
+[Script]
+http-response ^https?://(api|h5).xiuxiu.meitu.com/(?!(v1/feed/)) script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/mtxx.js, requires-body=true, timeout=60, tag=mtxx
+
+[MITM]
+hostname = api.xiuxiu.meitu.com

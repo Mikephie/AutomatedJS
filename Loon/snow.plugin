@@ -1,0 +1,11 @@
+#!name = SNOW-系列 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/snow.png
+
+[Script]
+http-response ^https?:\/\/.*\.snow\.me\/v\d\/purchase\/subscription\/subscriber\/status script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/snow.js, requires-body=true, timeout=60, tag=snow
+
+[MITM]
+hostname = *.snow.me

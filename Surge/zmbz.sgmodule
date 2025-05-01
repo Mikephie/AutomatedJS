@@ -1,0 +1,10 @@
+#!name = 最美壁纸 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+zmbz = type=http-response, pattern=^https:\/\/api\.fzxhmy\.com\/(?:unique\/(?:backgrounds|landinginitialize|division\/material)|image\/fetch|avatar\/landing|background\/overview|member\/details|creator\/newcomers|np\/overview|intelligence\/user\/appreciate\/ids\?|user\/points\?), script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/zmbz.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% api.fzxhmy.com

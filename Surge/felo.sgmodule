@@ -1,0 +1,10 @@
+#!name = felo
+#!desc=效率
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+felo = type=http-response, pattern=^https?:\/\/(translator|accounts).felo.me, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/felo.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% accounts.felo.me,translator.felo.me

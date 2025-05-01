@@ -1,0 +1,11 @@
+#!name = caipu
+#!desc=效率
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/caipu.js
+
+[Script]
+http-response ^https:\/\/api.*\.xiangha\.com script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/caipu.js, requires-body=true, timeout=60, tag=caipu
+
+[MITM]
+hostname = *.xiangha.com

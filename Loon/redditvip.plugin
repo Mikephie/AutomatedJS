@@ -1,0 +1,11 @@
+#!name = redditvip
+#!desc=效率
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/reddit.png
+
+[Script]
+http-response ^https:\/\/gql-fed\.reddit\.com\/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/redditvip.js, requires-body=true, timeout=60, tag=redditvip
+
+[MITM]
+hostname = gql-fed.reddit.com

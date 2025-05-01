@@ -1,0 +1,11 @@
+#!name = bodyok
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/bodyok.png
+
+[Script]
+http-response ^https:\/\/api\.apphud\.com\/v1\/(subscriptions|customers)$ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/bodyok.js, requires-body=true, timeout=60, tag=bodyok
+
+[MITM]
+hostname = api.apphud.com

@@ -1,10 +1,21 @@
-#!name = 彩云天气 解锁 VIP 脚本
-#!desc=模块
+#!name = caiyun
+#!desc=天气预测
 #!category=🔐APP
 #!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
 
+[Rule]
+HOST,gather.colorfulclouds.net,REJECT
+
 [URL Rewrite]
 ^https:\/\/ad\.cyapi\.cn\/v2\/req\?app_name=weather - reject
+^https:\/\/biz\.cyapi\.cn\/p\/v1\/trial_card\/info - reject
+^https:\/\/biz\.cyapi\.cn\/api\/v1\/token\/device$ - reject
+^https:\/\/biz\.cyapi\.cn\/p\/v1\/entries - reject
+^https:\/\/starplucker\.cyapi\.cn\/v3\/config$ - reject
+^https:\/\/starplucker\.cyapi\.cn\/v3\/notification\/message_center - reject
+^https:\/\/starplucker\.cyapi\.cn\/v3\/config\/cypage\/home\/conditions\/local$ - reject
+^https:\/\/starplucker\.cyapi\.cn\/v3\/config\/cypage\/home_activity\/conditions$ - reject
+^https:\/\/starplucker\.cyapi\.cn\/v3\/config\/cypage\/40day\/conditions\/local$ - reject
 
 [Script]
 caiyun = type=http-response, pattern=^https:\/\/wrapper\.cyapi\.cn\/v1\/activity\?app_name=weather, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/caiyun.js, requires-body=true, max-size=-1, timeout=60

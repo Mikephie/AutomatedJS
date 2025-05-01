@@ -1,0 +1,10 @@
+#!name = FaceLab 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+facelab = type=http-response, pattern=^https?:\/\/subscription-api\.lyrebirdstudio\.net\/subscriptions\/apple\/(verify|status|decode-apple-receipt), script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/facelab.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% subscription-api.lyrebirdstudio.net

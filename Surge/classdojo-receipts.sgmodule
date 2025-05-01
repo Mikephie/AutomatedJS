@@ -1,0 +1,10 @@
+#!name = classdojo-receipts
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+classdojo-receipts = type=http-response, pattern=^https:\/\/payments\.classdojo\.com\/v1\/receipts, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/classdojo.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% payments.classdojo.com

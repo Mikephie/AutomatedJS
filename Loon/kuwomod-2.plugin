@@ -1,0 +1,11 @@
+#!name = kuwomod-2
+#!desc=〔 酷我音乐&酷我畅听 〕全功能破解
+#!category=🔐APP
+#!author=影子[https://www.napi.ltd]
+#!icon=https://static.napi.ltd/Image/KuWo.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/kuwomod-2.js, requires-body=true, timeout=60, tag=kuwomod-2
+
+[MITM]
+hostname = *.kuwo.cn

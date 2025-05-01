@@ -1,0 +1,10 @@
+#!name = notebookMac2
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+notebookMac2 = type=http-response, pattern=^https:\/\/notebook\.zoho\.com\/api\/v1\/userprofile\/accounts\/payment\?action=get_feature_template, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/notebookMac2.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% notebook.zoho.com

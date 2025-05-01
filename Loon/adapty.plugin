@@ -1,0 +1,11 @@
+#!name = adapty-动态解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/adapty.png
+
+[Script]
+http-response ^https?:\/\/api\.adapty\.io\/api\/v\d\/sdk\/(analytics\/profiles|in-apps\/(apple\/receipt\/validate|purchase-containers)|purchase\/app-store) script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/adapty.js, requires-body=true, timeout=60, tag=adapty
+
+[MITM]
+hostname = api.adapty.io

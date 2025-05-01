@@ -1,0 +1,11 @@
+#!name = ssid
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/ssid.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/ssid.js, requires-body=true, timeout=60, tag=ssid
+
+[MITM]
+hostname = example.com

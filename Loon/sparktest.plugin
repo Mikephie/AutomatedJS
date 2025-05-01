@@ -1,0 +1,11 @@
+#!name = sparktest
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/sparktest.png
+
+[Script]
+http-response ^https:\/\/api\.revenuecat\.com\/v1\/subscribers\/8PNqxsNs34SUe82 script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/sparktest.js, requires-body=true, timeout=60, tag=sparktest
+
+[MITM]
+hostname = api.revenuecat.com

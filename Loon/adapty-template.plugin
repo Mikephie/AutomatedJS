@@ -1,0 +1,11 @@
+#!name = Adapty 订阅模板
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/adapty-template.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/adapty-template.js, requires-body=true, timeout=60, tag=adapty-template
+
+[MITM]
+hostname = example.com

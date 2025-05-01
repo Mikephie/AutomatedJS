@@ -1,0 +1,11 @@
+#!name = pptds
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/pptds.png
+
+[Script]
+http-response ^https:\/\/pptdashi\.kuoliang\.cn\/package\/ppt\/get(All|Random)\?.* script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/pptds.js, requires-body=true, timeout=60, tag=pptds
+
+[MITM]
+hostname = pptdashi.kuoliang.cn

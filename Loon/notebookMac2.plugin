@@ -1,0 +1,11 @@
+#!name = notebookMac2
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/notebookMac2.png
+
+[Script]
+http-response ^https:\/\/notebook\.zoho\.com\/api\/v1\/userprofile\/accounts\/payment\?action=get_feature_template script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/notebookMac2.js, requires-body=true, timeout=60, tag=notebookMac2
+
+[MITM]
+hostname = notebook.zoho.com

@@ -1,0 +1,10 @@
+#!name = filmix
+#!desc=影视编辑
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+filmix = type=http-response, pattern=^https:\/\/appv3\.filmix\.com\.cn\/api\/v1\/user\/user, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/filmix.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% appv3.filmix.com.cn

@@ -1,0 +1,10 @@
+#!name = caiyuntianqi-ddm
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+caiyuntianqi-ddm = type=http-response, pattern=^https?:\/\/(biz|wrapper|starplucker)\.(cyapi|caiyunapp)\.(cn|com)\/(.+\/(user\?app_name|activity\?app_name|visitors|operation\/banners|operation\/homefeatures|config)|p\/v\d\/(vip_info|user_info|entries|privileges|trial_card\/info)), script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/caiyuntianqi.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% *.cyapi.cn, *.caiyunapp.com

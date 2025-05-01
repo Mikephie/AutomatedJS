@@ -1,0 +1,11 @@
+#!name = qjsm-afengye
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/qjsm-afengye.png
+
+[Script]
+http-response ^https:\/\/sm\.szsszykj\.com\/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/saomiao.js, requires-body=true, timeout=60, tag=qjsm-afengye
+
+[MITM]
+hostname = sm.szsszykj.com

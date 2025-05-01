@@ -1,0 +1,10 @@
+#!name = bzg
+#!desc=效率
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+bzg = type=http-response, pattern=^http:\/\/format-api\.netpock\.com\/api\/user_info, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/bzg.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% format-api.netpock.com

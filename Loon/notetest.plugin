@@ -1,0 +1,11 @@
+#!name = notetest
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/notetest.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/notetest.js, requires-body=true, timeout=60, tag=notetest
+
+[MITM]
+hostname = notebook.zoho.com

@@ -1,0 +1,10 @@
+#!name = hljx
+#!desc=图像编辑
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+
+[Script]
+hljx = type=http-response, pattern=^https:\/\/love\.leminet\.cn\/golove\/v05\/profile, script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/hljx.js, requires-body=true, max-size=-1, timeout=60
+
+[MITM]
+hostname = %APPEND% love.leminet.cn

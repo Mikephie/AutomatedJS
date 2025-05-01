@@ -1,0 +1,11 @@
+#!name = Perfect365Video 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/perfect365video.png
+
+[Script]
+http-response ^https?:\/\/video-svr\.perfect365\.com\/video\/P365Video\/services script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/perfect365video.js, requires-body=true, timeout=60, tag=perfect365video
+
+[MITM]
+hostname = video-svr.perfect365.com

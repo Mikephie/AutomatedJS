@@ -1,0 +1,11 @@
+#!name = 水印全能王 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/syqnw.png
+
+[Script]
+http-response ^https:\/\/waterqnwa\.yunxiaoguo\.cn\/user\/info script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/syqnw.js, requires-body=true, timeout=60, tag=syqnw
+
+[MITM]
+hostname = waterqnwa.yunxiaoguo.cn

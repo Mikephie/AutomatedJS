@@ -1,0 +1,11 @@
+#!name = showUSDXDeposits
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/showUSDXDeposits.png
+
+[Script]
+http-response ^https?://example.com/ script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/showUSDXDeposits.js, requires-body=true, timeout=60, tag=showUSDXDeposits
+
+[MITM]
+hostname = example.com

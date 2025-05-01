@@ -1,0 +1,11 @@
+#!name = 视频转文字 解锁 VIP 脚本
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/paperwork.png
+
+[Script]
+http-response ^https:\/\/paperwork\.szshht\.cn\/api\/User\/(getUserInfo|getVipInfo) script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/paperwork.js, requires-body=true, timeout=60, tag=paperwork
+
+[MITM]
+hostname = paperwork.szshht.cn

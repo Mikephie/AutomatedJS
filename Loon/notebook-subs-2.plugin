@@ -1,0 +1,11 @@
+#!name = notebook-subs-2
+#!desc=模块
+#!category=🔐APP
+#!author=🅜ⓘ🅚ⓔ🅟ⓗ🅘ⓔ
+#!icon=https://raw.githubusercontent.com/Mikephie/icons/main/icon/notebook-subs-2.png
+
+[Script]
+http-response ^https://notebook.zoho.com/api/v1/userprofile/accounts/payment?action=get_current_plan_detail&include_(expired_plans|purchase_platform)=(true|false) script-path=https://raw.githubusercontent.com/Mikephie/AutomatedJS/main/QuantumultX/notebook-subs-2.js, requires-body=true, timeout=60, tag=notebook-subs-2
+
+[MITM]
+hostname = notebook.zoho.com
