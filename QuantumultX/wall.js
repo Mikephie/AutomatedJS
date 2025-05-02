@@ -27,11 +27,9 @@ if (now - lastNotifyTime > cooldownMs) {
 // 主脚本函数...
 let ddm = JSON.parse($response.body);
 const id = "com.wallpaperscraft.wallpapers.year.1.5baks";
-
-// 精准匹配路径，避免大小写问题
 const url = $request.url || "";
 
-if (/\/verifyReceipt/i.test(url)) {
+if (/\/verify_receipt\/remove_ads/i.test(url)) {
   ddm.items["all_time"] = {
     "type": "nonconsumable",
     "is_active": true
@@ -43,7 +41,7 @@ if (/\/verifyReceipt/i.test(url)) {
   };
 }
 
-if (/\/products/i.test(url)) {
+if (/\/products\/remove_ads/i.test(url)) {
   ddm = {
     "items": {
       "nonconsumables": ["all_time"],
@@ -52,6 +50,5 @@ if (/\/products/i.test(url)) {
   };
 }
 
-// 输出最终结果
 $done({ body: JSON.stringify(ddm) });
 // 主脚本函数...
