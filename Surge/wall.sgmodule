@@ -8,4 +8,3 @@ wall = type=http-response, pattern=^https?:\/\/billing-ios\.wallpaperscraft\.com
 
 [MITM]
 hostname = %APPEND%, billing-ios.wallpaperscraft.com
-hostname = %APPEND% billing-ios.wallpaperscraft.com
