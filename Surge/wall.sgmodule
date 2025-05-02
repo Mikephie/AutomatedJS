@@ -8,4 +8,3 @@ Wallcraft 解锁 = type=http-response, pattern=^https:\/\/billing-ios\.wallpaper
 
 [MITM]
 hostname = %APPEND%, billing-ios.wallpaperscraft.com
-
